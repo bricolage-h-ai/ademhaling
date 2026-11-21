@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V27 – live met je Forerunner</title>
+<title>Ademhalingsapp V28 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -208,6 +208,10 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 .hrOverlay.sim .hrLive{color:rgba(154,163,173,.8)}
 .mSpark{display:block;margin-top:6px;overflow:hidden}
 .mDelta{font-size:9.5px;color:rgba(200,210,220,.62);margin-top:2px;letter-spacing:.02em;white-space:nowrap}
+.vBar{display:none;position:absolute;left:5px;top:calc(var(--cy,50%) - 115px);width:6px;height:230px;border-radius:3px;background:rgba(170,190,215,.14);overflow:hidden;z-index:3;pointer-events:none}
+.vBar>div{position:absolute;left:0;right:0;bottom:0;height:0;border-radius:3px}
+.phone.exercise-mode:not(.graph-view) .vBar{display:block}
+.phone.exercise-mode:not(.graph-view)>.bar{display:none!important}
 </style>
 </head>
 <body>
@@ -282,6 +286,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       <div class="breathCue" id="breathCue" aria-live="off"><span id="breathCueNumber">4</span><span class="fraction" id="breathCueFraction">.00</span><span class="unit">sec</span></div>
       <div class="breathPhaseMark" id="breathPhaseMark">in</div>
       <button type="button" class="viewToggle" id="viewToggle" aria-label="Wissel weergave">Grafiek</button>
+      <div class="vBar" id="vBar" aria-hidden="true"><div id="vFill"></div></div>
       <div class="hrOverlay" id="hrOverlay" aria-live="off">
         <div class="hrRow"><svg class="hrHeart" id="hrHeart" viewBox="0 0 24 22" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.3 8.2 2.2 3.5 6.4 3.1 8.8 2.9 10.6 4.2 12 6c1.4-1.8 3.2-3.1 5.6-2.9 4.2.4 6.1 5.1 4.4 8.6C19.5 16.4 12 21 12 21z" fill="#e5484d"/></svg><span class="hrNum" id="hrNum">—</span><span class="hrUnit">bpm</span></div>
         <div class="hrLive"><span class="hrDot" id="hrDot"></span><span id="hrLiveText">Garmin · live</span></div>
@@ -329,7 +334,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     </div>
     </div>
     <label class="toggle"><input type="checkbox" id="sound" checked> Zachte toon bij wisselen</label>
-    <div class="ver" id="ver">V27</div>
+    <div class="ver" id="ver">V28</div>
 
     <div class="summary" id="summary" role="dialog" aria-label="Samenvatting">
       <h2>Sessie klaar</h2>
@@ -381,7 +386,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V28: verticale adembalk bij de cirkel, groot in/uit in de grafiek. V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -427,7 +432,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
     $('startBtn').disabled = s === 'live' && !live.synced;
     $('startBtn').textContent = 'Start oefening';
-    // V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
+    // V28: verticale adembalk bij de cirkel, groot in/uit in de grafiek. V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
     $('blk1').hidden = s !== 'live';
     $('measureField').hidden = s !== 'live';
     $('speedField').hidden = s === 'live';
@@ -1092,8 +1097,8 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     cx.fillStyle = 'rgb(' + col + ')'; cx.beginPath(); cx.arc(nowX, Y(nowH), 4.5, 0, Math.PI*2); cx.fill();
     // V22: in/uit op een vaste plek linksboven, in de fasekleur.
     cx.fillStyle = 'rgb(' + (S.inhale ? '235,110,105' : '120,170,240') + ')';
-    cx.font = '700 26px Inter, sans-serif'; cx.textAlign = 'left';
-    cx.fillText(S.inhale ? 'in' : 'uit', 18, 44);
+    cx.font = '800 48px Inter, sans-serif'; cx.textAlign = 'left';
+    cx.fillText(S.inhale ? 'in' : 'uit', 16, 56);
   }
   $('viewToggle').onclick = function(){
     graphView = !graphView;
@@ -1199,7 +1204,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     line(function(s){return s.hr;}, Yh, '#3b78d4');
   }
 
-  // V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag over de visualisatie; het hart klopt op de echte hartslag (lub-dub).
+  // V28: verticale adembalk bij de cirkel, groot in/uit in de grafiek. V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag over de visualisatie; het hart klopt op de echte hartslag (lub-dub).
   var hrBeat = {phase: 0, last: 0};
   function updateHrOverlay(){
     var now = performance.now(), dt = hrBeat.last ? Math.min(0.1, (now - hrBeat.last) / 1000) : 0;
@@ -1301,6 +1306,9 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('pattern').textContent = 'in ' + fmt(S.tin,1) + ' s · uit ' + fmt(S.tout,1) + ' s → doel ' + S.tgtIn + '-' + S.tgtOut;
     $('prog').style.width = (visualProgress * 100) + '%';
     $('prog').style.background = breathColor;
+    // V28: verticale adembalk naast de cirkel (omhoog bij in, omlaag bij uit).
+    $('vFill').style.height = (visualProgress * 100).toFixed(1) + '%';
+    $('vFill').style.background = breathColor;
     $('hrNow').textContent = Math.round(S.hrShown);
     var st = $('status'); st.textContent = S.status; st.className = 'chip ' + S.statusCls;
     $('clock').textContent = mmss(S.t) + ' / ' + mmss(S.dur);
