@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V20 – live met je Forerunner</title>
+<title>Ademhalingsapp V21 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -229,7 +229,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       <svg class="breathRing" id="breathRing" viewBox="0 0 338 340" aria-hidden="true">
         <defs><linearGradient id="breathGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop id="ringBlueStop" offset="0%" stop-color="#d9443f"/><stop id="ringGreenStop" offset="100%" stop-color="#3b78d4"/></linearGradient></defs>
         <circle class="breathRingTrack" cx="169" cy="170" r="153"></circle>
-        <circle class="breathRingProgress" id="breathRingProgress" cx="169" cy="170" r="153" pathLength="1000"></circle>
+        <circle class="breathRingProgress" id="breathRingProgress" cx="169" cy="170" r="153" pathLength="1000" transform="rotate(180 169 170)"></circle>
       </svg>
       <div class="breathCue" id="breathCue" aria-live="off"><span id="breathCueNumber">4</span><span class="fraction" id="breathCueFraction">.00</span><span class="unit">sec</span></div>
       <div class="breathPhaseMark" id="breathPhaseMark">in</div>
@@ -326,7 +326,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -372,7 +372,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
     $('startBtn').disabled = s === 'live' && !live.synced;
     $('startBtn').textContent = 'Start oefening';
-    // V20: stappenblokken
+    // V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
     $('blk1').hidden = s !== 'live';
     $('measureField').hidden = s !== 'live';
     $('speedField').hidden = s === 'live';
@@ -947,7 +947,10 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
   // ---------- V19: grafiekweergave ----------
   var graphView = false;
   function graphH(inh, pt, tin, tout){
-    return inh ? clamp(pt, 0, tin) : tin * (1 - clamp(pt / Math.max(.001, tout), 0, 1));
+    // V21: dezelfde zachte (cosinus) curve als de animatie: ronde bochten boven en onder.
+    var p = inh ? clamp(pt / Math.max(.001, tin), 0, 1) : clamp(pt / Math.max(.001, tout), 0, 1);
+    var e = 0.5 - 0.5 * Math.cos(Math.PI * p);
+    return inh ? tin * e : tin * (1 - e);
   }
   function rampAt(bt){
     if(bt < 90){ var p = clamp(bt / 90, 0, 1); return {tin: S.startIn + (4 - S.startIn) * p, tout: S.startOut + (6 - S.startOut) * p}; }
@@ -986,7 +989,6 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     for(var g = 1; g <= yMax; g++){
       cx.strokeStyle = 'rgba(170,190,215,.10)'; cx.lineWidth = 1;
       cx.beginPath(); cx.moveTo(30, Y(g)); cx.lineTo(W - 8, Y(g)); cx.stroke();
-      cx.fillStyle = 'rgba(170,190,215,.55)'; cx.fillText(g + ' s', 6, Y(g) + 4);
     }
     cx.strokeStyle = 'rgba(170,190,215,.25)'; cx.beginPath(); cx.moveTo(30, bot); cx.lineTo(W - 8, bot); cx.stroke();
     function path(pts, alpha, width, dash){
