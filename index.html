@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V22 – live met je Forerunner</title>
+<title>Ademhalingsapp V23 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -158,6 +158,9 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 .phone.exercise-mode #rampTimer{display:none}
 .phone.exercise-mode #rampPanel{gap:5px!important}
 .phone.exercise-mode #rampLabel{font-size:13px!important}
+.phone.exercise-mode #pattern{display:none!important}
+.phone.exercise-mode #rampPanel .readout,.phone.exercise-mode #rampPanel>.row{display:none!important}
+.phone.exercise-mode #rampPanel{padding-top:6px!important}
 .ver{font-size:11px;color:#5d6672;text-align:center;letter-spacing:.06em}
 @media(max-height:760px){
  .phone.exercise-mode.graph-view .stage{height:360px}
@@ -281,7 +284,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     </div>
     </div>
     <label class="toggle"><input type="checkbox" id="sound" checked> Zachte toon bij wisselen</label>
-    <div class="ver" id="ver">V22</div>
+    <div class="ver" id="ver">V23</div>
 
     <div class="summary" id="summary" role="dialog" aria-label="Samenvatting">
       <h2>Sessie klaar</h2>
@@ -333,7 +336,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -379,7 +382,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
     $('startBtn').disabled = s === 'live' && !live.synced;
     $('startBtn').textContent = 'Start oefening';
-    // V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
+    // V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
     $('blk1').hidden = s !== 'live';
     $('measureField').hidden = s !== 'live';
     $('speedField').hidden = s === 'live';
