@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V19 – live met je Forerunner</title>
+<title>Ademhalingsapp V20 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -130,6 +130,30 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 .phone.exercise-mode .viewToggle{display:block}
 .phone.graph-view .breathRing,.phone.graph-view .breathPhaseMark{display:none!important}
 .phone.graph-view .breathCue{top:34px;font-size:40px}
+#flow{display:flex;flex-direction:column;gap:10px}
+.fblk{border-radius:16px;border:1px solid var(--line);background:var(--panel);padding:12px 14px}
+.fblk[hidden]{display:none}
+.fhead{display:flex;align-items:center;gap:10px}
+.fnum{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:#252a31;color:var(--quiet);flex-shrink:0}
+.ftitle{font-weight:700;font-size:16px}
+.fsub{font-size:12px;color:var(--quiet);margin-top:2px}
+.fedit{display:none;border:0;background:transparent;color:var(--quiet);font:500 12px Inter,sans-serif;cursor:pointer;padding:6px}
+.fbody{display:none;flex-direction:column;gap:10px;margin-top:12px}
+.fblk.active{border:2px solid var(--blue);background:#121a26}
+.fblk.active .fnum{background:var(--blue);color:#fff}
+.fblk.active .fbody{display:flex}
+.fblk.done{border-color:rgba(47,163,107,.5);background:rgba(47,163,107,.12)}
+.fblk.done .fnum{background:var(--green);color:#fff}
+.fblk.done .ftitle{color:#9fe0bd}
+.fblk.done .fedit{display:block}
+.fblk.locked{opacity:.38}
+.flbl{font-size:11px;color:var(--quiet);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.fsum{font-size:13px;color:var(--quiet);line-height:1.5;background:#16191e;border-radius:10px;padding:10px 12px}
+.fsum b{color:var(--ink)}
+#measureField[hidden],#speedField[hidden],.steps[hidden],.liveDetailsToggle[hidden]{display:none!important}
+.phone.exercise-mode #flow{display:none!important}
+.phone:not(.exercise-mode) #stopBtn{display:none}
+.phone.live-flow:not(.exercise-mode)>.stage,.phone.live-flow:not(.exercise-mode)>.readout,.phone.live-flow:not(.exercise-mode)>.bar,.phone.live-flow:not(.exercise-mode)>.stats,.phone.live-flow:not(.exercise-mode)>div:has(>#chart){display:none!important}
 @media(max-height:760px){
  .phone.exercise-mode{gap:10px;padding-top:14px}
  .phone.exercise-mode .stage{height:285px}
@@ -152,14 +176,38 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       <button type="button" id="srcSim" aria-pressed="true">Simulatie</button>
       <button type="button" id="srcLive" aria-pressed="false">Live horloge</button>
     </div>
-    <div id="liveBox" class="livebox" hidden>
-      <div class="steps" aria-label="Voortgang">
+    <div id="flow">
+    <div class="fblk" id="blk1">
+    <div class="fhead"><span class="fnum" id="fnum1">1</span><div style="flex:1;min-width:0"><div class="ftitle" id="ftitle1">Verbinden</div><div class="fsub" id="fsub1">Zet Hartslag uitzenden aan op je Forerunner</div></div><button type="button" class="fedit" id="fedit1" data-step="1">wijzig</button></div>
+    <div id="liveBox" class="fbody">
+      <div class="steps" aria-label="Voortgang" hidden>
         <span id="st1" class="cur">1 · Verbinden</span><span id="st2">2 · Synchroniseren</span><span id="st3">3 · Oefening</span>
       </div>
       <div class="conn" id="connBanner"><span class="cdot" id="cdot"></span><span id="connText">Nog geen verbinding met je horloge</span></div>
-      <button type="button" class="liveDetailsToggle" id="liveDetailsToggle" aria-expanded="true">Details inklappen</button>
-      <div class="row"><button type="button" class="btn" id="btConnect">Verbind horloge</button><button type="button" class="btn" id="btAll" style="flex:0 0 auto;padding:0 12px">Alle apparaten</button></div>
+      <button type="button" class="liveDetailsToggle" id="liveDetailsToggle" aria-expanded="true" hidden>Details inklappen</button>
+      <div class="row"><button type="button" class="btn primary" id="btConnect">Verbind horloge</button><button type="button" class="btn" id="btAll" style="flex:0 0 auto;padding:0 12px">Alle apparaten</button></div>
       <div class="row" style="justify-content:space-between"><span class="small" id="btStatus">Niet verbonden · zet Hartslag uitzenden aan op je horloge</span><span class="small" id="btBpm"></span></div>
+    </div>
+    </div>
+    <div class="fblk" id="blk2">
+    <div class="fhead"><span class="fnum" id="fnum2">2</span><div style="flex:1;min-width:0"><div class="ftitle" id="ftitle2">Oefening kiezen</div><div class="fsub" id="fsub2">Programma, duur en startmeting</div></div><button type="button" class="fedit" id="fedit2" data-step="2">wijzig</button></div>
+    <div class="fbody">
+    <div class="seg" role="group" aria-label="Programma">
+      <button type="button" id="pRust" aria-pressed="true">Rustiger · 4-6</button>
+      <button type="button" id="pCoh" aria-pressed="false">Coherentie · 5-5</button>
+    </div>
+    <div class="row">
+      <div class="field" id="startHrField"><label for="startHr">Start-hartslag</label><input id="startHr" type="number" min="50" max="120" value="78"></div>
+      <div class="field"><label for="dur">Duur</label><select id="dur"><option value="180" selected>3 min</option><option value="300">5 min</option><option value="600">10 min</option></select></div>
+      <div class="field" id="speedField"><label for="speed">Tempo</label><select id="speed"><option value="1">1×</option><option value="4">4× (test)</option></select></div>
+    </div>
+    <div id="measureField"><div class="flbl">Startmeting</div><div class="seg" role="group" aria-label="Startmeting"><button type="button" id="mSync" aria-pressed="false">Meten 30 s</button><button type="button" id="mSkip" aria-pressed="true">Overslaan</button></div></div>
+    <button type="button" class="btn primary" id="flowNext">Verder</button>
+    </div>
+    </div>
+    <div class="fblk" id="blk3">
+    <div class="fhead"><span class="fnum" id="fnum3">3</span><div style="flex:1;min-width:0"><div class="ftitle" id="ftitle3">Ademen</div><div class="fsub" id="fsub3">Start de oefening</div></div><button type="button" class="fedit" id="fedit3" data-step="3">wijzig</button></div>
+    <div class="fbody">
       <div id="breathSync" hidden style="margin-top:12px;padding:14px;border-radius:12px;background:#16191e;text-align:center">
         <div class="small" id="breathSyncHint">Registreer 30 seconden je ademhaling.</div>
         <div id="breathSyncState" style="font-size:20px;font-weight:700;margin:8px 0 8px">Wacht op start</div>
@@ -171,15 +219,10 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
         <button type="button" class="btn" id="skipSyncBtn" style="width:100%;margin-top:8px" disabled>Overslaan · start met gemiddelde</button>
         <div class="small" id="breathSyncCount" style="margin-top:8px">0 ademovergangen geregistreerd</div>
       </div>
+    <div class="fsum" id="flowSum"></div>
+    <button type="button" class="btn primary" id="startBtn" style="min-height:56px;font-size:17px">Start oefening</button>
     </div>
-    <div class="seg" role="group" aria-label="Programma">
-      <button type="button" id="pRust" aria-pressed="true">Rustiger · 4-6</button>
-      <button type="button" id="pCoh" aria-pressed="false">Coherentie · 5-5</button>
     </div>
-    <div class="row">
-      <div class="field" id="startHrField"><label for="startHr">Start-hartslag</label><input id="startHr" type="number" min="50" max="120" value="78"></div>
-      <div class="field"><label for="dur">Duur</label><select id="dur"><option value="180" selected>3 min</option><option value="300">5 min</option><option value="600">10 min</option></select></div>
-      <div class="field"><label for="speed">Tempo</label><select id="speed"><option value="1">1×</option><option value="4">4× (test)</option></select></div>
     </div>
     <div class="stage">
       <canvas id="cloud" height="280" aria-hidden="true"></canvas>
@@ -219,7 +262,6 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       <div class="legend"><span><i style="background:var(--blue)"></i>Hartslag (bpm)</span><span><i style="background:var(--orange)"></i>Ademtempo (per min)</span><span id="clock">0:00</span></div>
     </div>
     <div class="btns">
-      <button type="button" class="btn primary" id="startBtn">Start</button>
       <button type="button" class="btn" id="stopBtn" disabled>Stop</button>
     </div>
     <div id="simCtrl" style="display:flex;flex-direction:column;gap:12px">
@@ -284,7 +326,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -299,6 +341,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     prog = p;
     $('pRust').setAttribute('aria-pressed', p==='rust');
     $('pCoh').setAttribute('aria-pressed', p==='coh');
+    flowText();
   }
   $('pRust').onclick = function(){ if(!running) setProg('rust'); };
   $('pCoh').onclick = function(){ if(!running) setProg('coh'); };
@@ -328,7 +371,13 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('startHrField').style.display = s === 'sim' ? '' : 'none';
     $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
     $('startBtn').disabled = s === 'live' && !live.synced;
-    $('startBtn').textContent = s === 'live' ? 'Start oefening' : 'Start';
+    $('startBtn').textContent = 'Start oefening';
+    // V20: stappenblokken
+    $('blk1').hidden = s !== 'live';
+    $('measureField').hidden = s !== 'live';
+    $('speedField').hidden = s === 'live';
+    $('phone').classList.toggle('live-flow', s === 'live');
+    flowGo(s === 'live' ? (live.firstSeen ? 2 : 1) : 2);
     if(s === 'live' && !hasBT) setConn('bad', 'Bluetooth niet beschikbaar in deze browser: gebruik Chrome op Android');
     else if(s === 'live' && inFrame) setConn('wait', 'Ingesloten venster: Bluetooth kan geblokkeerd zijn. Open de GitHub-link in Chrome.');
   }
@@ -355,7 +404,8 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('btBpm').textContent = '♥ ' + m.bpm + ' bpm' + (live.rr ? ' · RR ✓' : '');
     if(!running) $('hrNow').textContent = m.bpm;
     var d = $('cdot'); d.classList.add('beat'); setTimeout(function(){ d.classList.remove('beat'); }, 150);
-    if(!live.firstSeen){ live.firstSeen = true; setConn('ok', 'Verbonden · hartslag komt binnen'); setSteps(2, 1); runSync(); }
+    if(!live.firstSeen){ live.firstSeen = true; setConn('ok', 'Verbonden · hartslag komt binnen'); setSteps(2, 1); if(flowStep < 2) flowGo(2); }
+    if(flowStep > 1) flowText();
   }
 
   async function connectBT(acceptAll){
@@ -372,7 +422,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
         $('liveDetailsToggle').setAttribute('aria-expanded','true');
         $('liveDetailsToggle').textContent = 'Details inklappen';
         setConn('bad', 'Verbinding verbroken · tik opnieuw op Verbind horloge');
-        $('btStatus').textContent = 'Niet verbonden'; setSteps(1, 0);
+        $('btStatus').textContent = 'Niet verbonden'; setSteps(1, 0); $('breathSync').hidden = true; if(!running) flowGo(1);
         if(!running) $('startBtn').disabled = true;
       });
       var server = await dev.gatt.connect();
@@ -526,6 +576,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('liveDetailsToggle').setAttribute('aria-expanded','false');
     $('liveDetailsToggle').textContent = 'Details tonen';
     $('startBtn').disabled = false;
+    flowText();
   }
 
   function runSync(){
@@ -539,14 +590,14 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     syncSamples = [];
     if(syncTimer){clearInterval(syncTimer);syncTimer=null;}
     $('breathSync').hidden = false;
-    $('breathSyncHint').textContent = 'Kies synchroniseren voor een meting van 30 seconden, of sla die over om direct te starten.';
-    $('breathSyncState').textContent = 'Kies je startmethode';
+    $('breathSyncHint').textContent = 'Houd de knop vast bij inademen en laat los bij uitademen, 30 seconden lang.';
+    $('breathSyncState').textContent = 'Tik en houd vast om te beginnen';
     $('breathTap').disabled = false;
     $('breathTap').classList.remove('inhale-active','exhale-active');
     $('breathTap').textContent = 'Synchroniseren · houd vast bij inademen';
     $('breathTap').setAttribute('aria-label','Synchroniseren: houd ingedrukt tijdens inademen om de meting te starten');
     $('breathSyncCount').textContent = '0 ademfasen geregistreerd';
-    $('skipSyncBtn').disabled = false; $('skipSyncBtn').textContent = 'Overslaan · start met gemiddelde';
+    $('skipSyncBtn').disabled = false; $('skipSyncBtn').textContent = 'Toch overslaan · start op 3,5 · 4,0';
     $('breathSyncTimer').textContent = '00:30';
     $('phase').textContent = 'Wacht op je ademhaling';
     $('count').textContent = '30';
@@ -581,8 +632,59 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('liveBox').classList.add('is-collapsed');
     $('liveDetailsToggle').setAttribute('aria-expanded','false');
     $('liveDetailsToggle').textContent = 'Details tonen';
+    flowMeasure = 'skip'; setMeasure('skip');
   }
   $('skipSyncBtn').onclick = skipSync;
+
+  // ---------- V20: stappenblokken (verbinden → oefening kiezen → ademen) ----------
+  var flowStep = 1, flowMeasure = 'skip';
+  function setMeasure(m){
+    flowMeasure = m;
+    $('mSync').setAttribute('aria-pressed', m === 'sync');
+    $('mSkip').setAttribute('aria-pressed', m === 'skip');
+    flowText();
+  }
+  function flowText(){
+    var dev = live.device && live.device.name ? live.device.name : 'je horloge';
+    $('fsub1').textContent = flowStep > 1 ? dev + (live.bpm ? ' · ♥ ' + live.bpm + ' bpm' : '') : 'Zet Hartslag uitzenden aan op je Forerunner';
+    $('ftitle1').textContent = flowStep > 1 ? 'Verbonden' : 'Verbinden';
+    var p = PROGS[prog], d = Math.round(parseFloat($('dur').value) / 60);
+    var m = source !== 'live' ? 'simulatie' : (flowMeasure === 'sync' ? '30 s meten' : 'meting overslaan');
+    $('fsub2').textContent = flowStep > 2 ? p.name + ' ' + p.tin + '-' + p.tout + ' · ' + d + ' min · ' + m : 'Programma, duur en startmeting';
+    $('ftitle2').textContent = flowStep > 2 ? 'Oefening gekozen' : 'Oefening kiezen';
+    var sum;
+    if(source !== 'live') sum = 'Simulatie · start op een geschat tempo bij je start-hartslag.';
+    else if(flowMeasure === 'sync') sum = live.synced && !live.syncSkipped
+      ? 'Start op <b>je gemeten ritme</b> → 4-6 na 1:30 → 4-7 na 3:00.'
+      : 'Eerst 30 s meten met de knop hierboven, daarna start je op <b>je eigen ritme</b>.';
+    else sum = 'Start op <b>3,5 in · 4,0 uit</b> → 4-6 na 1:30 → 4-7 na 3:00.';
+    $('flowSum').innerHTML = sum;
+  }
+  function flowGo(n){
+    if(running) return;
+    if(source === 'live' && n > 1 && !live.firstSeen) n = 1;
+    var leavingSync = flowStep === 3 && n < 3 && syncing;
+    flowStep = n;
+    [1,2,3].forEach(function(i){
+      $('blk' + i).className = 'fblk ' + (i < n ? 'done' : i === n ? 'active' : 'locked');
+      $('fnum' + i).textContent = i < n ? '✓' : String(i);
+    });
+    if(leavingSync || (n < 3 && source === 'live')){
+      syncing = false; if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }
+      $('breathSync').hidden = true; live.synced = false; live.syncSkipped = false;
+      $('startBtn').disabled = true;
+    }
+    if(n === 3){
+      if(source === 'live'){ if(flowMeasure === 'skip') skipSync(); else runSync(); }
+      else $('startBtn').disabled = false;
+    }
+    flowText();
+  }
+  $('mSync').onclick = function(){ setMeasure('sync'); };
+  $('mSkip').onclick = function(){ setMeasure('skip'); };
+  $('flowNext').onclick = function(){ flowGo(3); };
+  [1,2].forEach(function(i){ $('fedit' + i).onclick = function(){ flowGo(i); }; });
+  $('dur').addEventListener('change', flowText);
 
   function calculateBreathStats(taps){
     var complete = [];
@@ -1102,7 +1204,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('sSteps').textContent = S.fwd + ' / ' + S.back;
     $('summary').classList.add('show');
     $('startBtn').disabled = source === 'live' && !live.synced; $('stopBtn').disabled = true;
-    $('startBtn').textContent = source === 'live' ? 'Start oefening' : 'Start';
+    $('startBtn').textContent = 'Start oefening';
     $('phase').textContent = 'Klaar'; $('count').textContent = '–'; $('pattern').textContent = source === 'live' ? 'Tik op Start oefening voor een nieuwe ronde' : 'Druk op start';
     if(source === 'live' && live.synced) setSteps(3, 2);
     draw();
