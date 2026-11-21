@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ademhalingsapp – live met je Forerunner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d10;--panel:#14171c;--line:#252a31;--ink:#f2f3f5;--quiet:#9aa3ad;--blue:#3b78d4;--orange:#F28C28;--green:#2FA36B;--red:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px;display:flex;flex-wrap:wrap;gap:36px;justify-content:center;align-items:flex-start}
+.phone{width:390px;max-width:100%;background:#000;border:10px solid #22262c;border-radius:44px;padding:18px 16px 20px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.side{flex:1 1 360px;max-width:520px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em}
+h2{margin:0 0 6px;font-size:15px;font-weight:600}
+p{margin:0;color:var(--quiet);line-height:1.5;font-size:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.seg{display:flex;background:#16191e;border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;color:var(--quiet);font:600 13px Inter,sans-serif;padding:9px 6px;border-radius:8px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:#2a2f37;color:var(--ink)}
+.row{display:flex;gap:8px;align-items:center}
+.row label{font-size:12px;color:var(--quiet)}
+.field{display:flex;flex-direction:column;gap:4px;flex:1}
+.field select,.field input[type=number]{background:#16191e;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font:500 14px Inter,sans-serif;min-height:40px;width:100%}
+.stage{position:relative;height:280px;border-radius:20px;background:#07090c;overflow:hidden}
+canvas{display:block;width:100%}
+.readout{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.readout .pattern{margin-top:2px}
+.phase{font-size:20px;font-weight:600;letter-spacing:.01em}
+.count{font-size:46px;font-weight:700;font-variant-numeric:tabular-nums}
+.pattern{font-size:12px;color:var(--quiet)}
+.bar{height:6px;background:#1c2026;border-radius:3px;overflow:hidden}
+.bar>div{height:100%;width:0;background:var(--blue);border-radius:3px}
+.stats{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hr{display:flex;align-items:baseline;gap:6px}
+.hr b{font-size:34px;font-variant-numeric:tabular-nums}
+.hr span{font-size:12px;color:var(--quiet)}
+.chip{font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;background:#1c2026;color:var(--quiet);text-align:right;max-width:200px}
+.chip.ok{background:rgba(47,163,107,.16);color:#7ad3a6}
+.chip.wait{background:rgba(242,140,40,.16);color:#f5b46f}
+.chip.lead{background:rgba(59,120,212,.18);color:#8db4ee}
+.btns{display:flex;gap:8px}
+.btn{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#16191e;color:var(--ink);font:600 14px Inter,sans-serif;cursor:pointer}
+.btn.primary{background:var(--blue);border-color:var(--blue)}
+.btn:disabled{opacity:.4;cursor:default}
+.slider{display:flex;flex-direction:column;gap:6px}
+.slider input{width:100%;accent-color:var(--blue)}
+.slider .row{justify-content:space-between}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--quiet)}
+.legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.summary{position:absolute;inset:0;background:rgba(0,0,0,.92);display:none;flex-direction:column;justify-content:center;padding:28px 24px;gap:14px}
+.summary.show{display:flex}
+.summary h2{font-size:22px}
+.sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sgrid div{background:#14171c;border-radius:12px;padding:12px}
+.sgrid b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.sgrid span{font-size:12px;color:var(--quiet)}
+ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--quiet);cursor:pointer}
+.toggle input{accent-color:var(--blue);width:18px;height:18px}
+.livebox{display:flex;flex-direction:column;gap:8px;background:#101317;border:1px solid var(--line);border-radius:12px;padding:10px}
+.livebox[hidden]{display:none}
+.small{font-size:12px;color:var(--quiet)}
+.steps{display:flex;gap:6px}
+.steps span{flex:1;text-align:center;font-size:11px;font-weight:600;padding:7px 4px;border-radius:8px;background:#16191e;color:var(--quiet)}
+.steps span.cur{background:rgba(59,120,212,.2);color:#8db4ee}
+.steps span.done{background:rgba(47,163,107,.18);color:#7ad3a6}
+.conn{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;padding:10px 12px;border-radius:10px;background:#16191e}
+.conn.ok{background:rgba(47,163,107,.16);color:#9fe0bd}
+.conn.bad{background:rgba(229,72,77,.16);color:#f2a3a6}
+.conn.wait{background:rgba(242,140,40,.14);color:#f5c08a}
+.cdot{width:12px;height:12px;border-radius:50%;background:var(--quiet);flex-shrink:0;transition:transform .15s}
+.conn.ok .cdot{background:var(--green)}.conn.bad .cdot{background:var(--red)}.conn.wait .cdot{background:var(--orange)}
+.cdot.beat{transform:scale(1.5)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="phone" aria-label="Simulatie van de ademhalingsapp op een telefoon">
+    <div class="seg" role="group" aria-label="Hartslagbron">
+      <button type="button" id="srcSim" aria-pressed="true">Simulatie</button>
+      <button type="button" id="srcLive" aria-pressed="false">Live horloge</button>
+    </div>
+    <div id="liveBox" class="livebox" hidden>
+      <div class="steps" aria-label="Voortgang">
+        <span id="st1" class="cur">1 · Verbinden</span><span id="st2">2 · Synchroniseren</span><span id="st3">3 · Oefening</span>
+      </div>
+      <div class="conn" id="connBanner"><span class="cdot" id="cdot"></span><span id="connText">Nog geen verbinding met je horloge</span></div>
+      <div class="row"><button type="button" class="btn" id="btConnect">Verbind horloge</button><button type="button" class="btn" id="btAll" style="flex:0 0 auto;padding:0 12px">Alle apparaten</button></div>
+      <div class="row" style="justify-content:space-between"><span class="small" id="btStatus">Niet verbonden · zet Hartslag uitzenden aan op je horloge</span><span class="small" id="btBpm"></span></div>
+    </div>
+    <div class="seg" role="group" aria-label="Programma">
+      <button type="button" id="pRust" aria-pressed="true">Rustiger · 4-6</button>
+      <button type="button" id="pCoh" aria-pressed="false">Coherentie · 5-5</button>
+    </div>
+    <div class="row">
+      <div class="field" id="startHrField"><label for="startHr">Start-hartslag</label><input id="startHr" type="number" min="50" max="120" value="78"></div>
+      <div class="field"><label for="dur">Duur</label><select id="dur"><option value="180">3 min</option><option value="300" selected>5 min</option><option value="600">10 min</option></select></div>
+      <div class="field"><label for="speed">Tempo</label><select id="speed"><option value="1">1×</option><option value="4">4× (test)</option></select></div>
+    </div>
+    <div class="stage">
+      <canvas id="cloud" height="280" aria-hidden="true"></canvas>
+    </div>
+    <div class="readout">
+      <div><div class="phase" id="phase">Klaar</div><div class="pattern" id="pattern">Druk op start</div></div>
+      <div class="count" id="count">–</div>
+    </div>
+    <div class="bar" aria-hidden="true"><div id="prog"></div></div>
+    <div class="stats">
+      <div class="hr"><b id="hrNow">78</b><span>bpm</span></div>
+      <div class="chip" id="status" role="status">Nog niet gestart</div>
+    </div>
+    <div>
+      <canvas id="chart" height="120" aria-label="Live grafiek van hartslag en ademtempo" role="img"></canvas>
+      <div class="legend"><span><i style="background:var(--blue)"></i>Hartslag (bpm)</span><span><i style="background:var(--orange)"></i>Ademtempo (per min)</span><span id="clock">0:00</span></div>
+    </div>
+    <div class="btns">
+      <button type="button" class="btn primary" id="startBtn">Start</button>
+      <button type="button" class="btn" id="stopBtn" disabled>Stop</button>
+    </div>
+    <div id="simCtrl" style="display:flex;flex-direction:column;gap:12px">
+    <div class="slider">
+      <div class="row"><label for="follow">Hoe goed volgt je lichaam? (automatisch)</label><label id="followVal">70%</label></div>
+      <input id="follow" type="range" min="0" max="100" value="70">
+    </div>
+    <div class="btns">
+      <button type="button" class="btn" id="yesBtn">Ik volg</button>
+      <button type="button" class="btn" id="noBtn">Ik volg niet</button>
+    </div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sound" checked> Zachte toon bij wisselen</label>
+
+    <div class="summary" id="summary" role="dialog" aria-label="Samenvatting">
+      <h2>Sessie klaar</h2>
+      <div class="sgrid">
+        <div><b id="sStart">–</b><span>hartslag bij start</span></div>
+        <div><b id="sEnd">–</b><span>hartslag aan het eind</span></div>
+        <div><b id="sDelta">–</b><span>verschil</span></div>
+        <div><b id="sTime">–</b><span>duur</span></div>
+        <div><b id="sBr">–</b><span>ademtempo start → eind</span></div>
+        <div><b id="sSteps">–</b><span>stapjes vooruit / terug</span></div>
+      </div>
+      <button type="button" class="btn primary" id="againBtn">Opnieuw</button>
+    </div>
+  </div>
+
+  <div class="side">
+    <div>
+      <h1>Ademhalingsapp</h1>
+      <p style="margin-top:8px">Zoals een auto die naast je komt rijden: de app ademt eerst op jouw tempo mee en neemt je dan stapje voor stapje mee naar het doelpatroon, alleen zo snel als je hartslag volgt.</p>
+    </div>
+    <div class="card">
+      <h2>Live met je horloge</h2>
+      <ol>
+        <li><b style="color:var(--ink)">Verbinden:</b> zet Hartslag uitzenden aan op je Forerunner en tik op Verbind horloge. De groene balk bevestigt de verbinding en het stipje klopt mee met elke meting.</li>
+        <li><b style="color:var(--ink)">Synchroniseren:</b> 15 seconden lopen we gelijk met je echte hartslag.</li>
+        <li><b style="color:var(--ink)">Oefening:</b> kies 4-6 of 5-5 en tik op Start oefening.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>Zo werkt de lus</h2>
+      <ol>
+        <li><b style="color:var(--ink)">Meten:</b> 15 seconden synchroniseren; de app meet je hartslag terwijl je gewoon ademt.</li>
+        <li><b style="color:var(--ink)">Meelopen:</b> daarna begint hij op een gemiddeld ademtempo dat bij die hartslag past (bij 78 bpm ongeveer 3 s in, 3 s uit) en volgt twee ademhalingen lang.</li>
+        <li><b style="color:var(--ink)">Bijsturen per ademhaling:</b> na elke uitademing kijkt de app naar je hartslag.</li>
+        <li><b style="color:var(--ink)">Volg je?</b> Dan schuift elke fase 0,1 s op richting het doel (bijv. in 4,9 · uit 5,1).</li>
+        <li><b style="color:var(--ink)">Loop je voor?</b> Dan gaat hij sneller: 0,2 s per stap.</li>
+        <li><b style="color:var(--ink)">Volg je niet?</b> Dan zet hij 0,1 s terug en wacht.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>Zelf testen</h2>
+      <p>Met de schuif stel je in hoe goed je lichaam automatisch meegaat. Met <b style="color:var(--ink)">Ik volg</b> of <b style="color:var(--ink)">Ik volg niet</b> forceer je de reactie voor de volgende drie ademhalingen. Zet het tempo op 4× om een hele sessie snel te zien.</p>
+    </div>
+    <div class="card">
+      <h2>Wat is nagebootst</h2>
+      <p>De hartslag is gesimuleerd: een langzame daling als je volgt, plus een kleine golf mee met je adem (sneller bij inademen, langzamer bij uitademen) en een paar seconden sensorvertraging. Of de Forerunner 165 zo'n signaal live doorgeeft, testen we nog.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
+  var $ = function(id){ return document.getElementById(id); };
+  var prog = 'rust', running = false, last = 0, audio = null;
+  var S = {};
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function fmt(n,d){ return n.toFixed(d).replace('.', ','); }
+  function mmss(s){ s = Math.max(0, Math.round(s)); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+
+  function setProg(p){
+    prog = p;
+    $('pRust').setAttribute('aria-pressed', p==='rust');
+    $('pCoh').setAttribute('aria-pressed', p==='coh');
+  }
+  $('pRust').onclick = function(){ if(!running) setProg('rust'); };
+  $('pCoh').onclick = function(){ if(!running) setProg('coh'); };
+  $('follow').oninput = function(){ $('followVal').textContent = this.value + '%'; };
+
+  // ---------- live heart rate via Web Bluetooth ----------
+  var source = 'sim', syncing = false;
+  var live = {device:null, connected:false, bpm:null, t:0, rr:false, synced:false, syncHr:null};
+  var hasBT = !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
+  var inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
+
+  function setSteps(n, doneUpTo){
+    ['st1','st2','st3'].forEach(function(id, i){
+      var el = $(id); el.className = (i < doneUpTo) ? 'done' : (i === n - 1 ? 'cur' : '');
+    });
+  }
+  function setConn(cls, text){ $('connBanner').className = 'conn ' + cls; $('connText').textContent = text; }
+
+  function setSource(s){
+    source = s;
+    $('srcSim').setAttribute('aria-pressed', s === 'sim');
+    $('srcLive').setAttribute('aria-pressed', s === 'live');
+    $('liveBox').hidden = s !== 'live';
+    $('simCtrl').style.display = s === 'sim' ? 'flex' : 'none';
+    $('startHrField').style.display = s === 'sim' ? '' : 'none';
+    $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
+    $('startBtn').disabled = s === 'live' && !live.synced;
+    $('startBtn').textContent = s === 'live' ? 'Start oefening' : 'Start';
+    if(s === 'live' && !hasBT) setConn('bad', 'Bluetooth niet beschikbaar in deze browser: gebruik Chrome op Android');
+    else if(s === 'live' && inFrame) setConn('wait', 'Ingesloten venster: Bluetooth kan geblokkeerd zijn. Open de GitHub-link in Chrome.');
+  }
+  $('srcSim').onclick = function(){ if(!running) setSource('sim'); };
+  $('srcLive').onclick = function(){ if(!running) setSource('live'); };
+
+  function parseHR(dv){
+    var flags = dv.getUint8(0), i = 1, bpm;
+    if(flags & 1){ bpm = dv.getUint16(i, true); i += 2; } else { bpm = dv.getUint8(i); i += 1; }
+    if(flags & 8) i += 2;
+    var rr = (flags & 16) && i + 1 < dv.byteLength;
+    return {bpm: bpm, rr: !!rr};
+  }
+
+  function onHR(e){
+    var m = parseHR(e.target.value);
+    if(!m.bpm) return;
+    live.bpm = m.bpm; live.t = performance.now(); if(m.rr) live.rr = true;
+    $('btBpm').textContent = '♥ ' + m.bpm + ' bpm' + (live.rr ? ' · RR ✓' : '');
+    if(!running) $('hrNow').textContent = m.bpm;
+    var d = $('cdot'); d.classList.add('beat'); setTimeout(function(){ d.classList.remove('beat'); }, 150);
+    if(!live.firstSeen){ live.firstSeen = true; setConn('ok', 'Verbonden · hartslag komt binnen'); setSteps(2, 1); runSync(); }
+  }
+
+  async function connectBT(acceptAll){
+    if(!hasBT){ setConn('bad', 'Bluetooth niet beschikbaar in deze browser'); return; }
+    try{
+      setConn('wait', 'Zoeken… kies je Forerunner in de lijst');
+      var opts = acceptAll ? {acceptAllDevices: true, optionalServices: ['heart_rate']} : {filters: [{services: ['heart_rate']}]};
+      var dev = await navigator.bluetooth.requestDevice(opts);
+      live.device = dev;
+      setConn('wait', 'Verbinden met ' + (dev.name || 'horloge') + '…');
+      dev.addEventListener('gattserverdisconnected', function(){
+        live.connected = false; live.firstSeen = false; live.synced = false; syncing = false;
+        setConn('bad', 'Verbinding verbroken · tik opnieuw op Verbind horloge');
+        $('btStatus').textContent = 'Niet verbonden'; setSteps(1, 0);
+        if(!running) $('startBtn').disabled = true;
+      });
+      var server = await dev.gatt.connect();
+      var svc = await server.getPrimaryService('heart_rate');
+      var chr = await svc.getCharacteristic('heart_rate_measurement');
+      chr.addEventListener('characteristicvaluechanged', onHR);
+      await chr.startNotifications();
+      live.connected = true;
+      $('btStatus').textContent = 'Verbonden met ' + (dev.name || 'horloge');
+      setConn('ok', 'Verbonden met ' + (dev.name || 'horloge') + ' · wachten op hartslag…');
+    }catch(err){
+      var msg = (err && err.message) || String(err);
+      if(/cancel|NotFoundError/i.test(String(err && err.name) + msg)) setConn('bad', 'Geen horloge gekozen. Staat Hartslag uitzenden aan? Probeer anders Alle apparaten.');
+      else if(/Security|not allowed|disallowed|policy/i.test(msg)) setConn('bad', 'Bluetooth geblokkeerd in dit venster. Open de GitHub-link in Chrome.');
+      else setConn('bad', 'Niet gelukt: ' + msg);
+    }
+  }
+  $('btConnect').onclick = function(){ connectBT(false); };
+  $('btAll').onclick = function(){ connectBT(true); };
+
+  // step 2: synchronise on the real heart rate for 15 s, before an exercise can start
+  function runSync(){
+    if(syncing) return;
+    syncing = true; live.synced = false; $('startBtn').disabled = true;
+    var samples = [], t0 = performance.now(), LEN = 15000;
+    var iv = setInterval(function(){
+      if(!syncing){ clearInterval(iv); return; }
+      var now = performance.now(), left = Math.max(0, LEN - (now - t0));
+      if(live.bpm && now - live.t < 5000) samples.push(live.bpm);
+      $('phase').textContent = 'Synchroniseren…';
+      $('count').textContent = Math.ceil(left / 1000);
+      $('pattern').textContent = 'Adem rustig, we lopen gelijk met je hartslag';
+      $('prog').style.width = ((now - t0) / LEN * 100) + '%'; $('prog').style.background = 'var(--quiet)';
+      $('status').textContent = 'Synchroniseren · ' + samples.length + ' metingen'; $('status').className = 'chip lead';
+      if(left <= 0){
+        clearInterval(iv); syncing = false;
+        if(samples.length < 5){ setConn('bad', 'Te weinig metingen ontvangen · probeer opnieuw'); setSteps(1, 0); return; }
+        live.syncHr = samples.reduce(function(a, b){ return a + b; }, 0) / samples.length;
+        live.synced = true;
+        setSteps(3, 2);
+        setConn('ok', 'Gesynchroniseerd op ' + Math.round(live.syncHr) + ' bpm · klaar om te starten');
+        $('phase').textContent = 'Klaar'; $('count').textContent = Math.round(live.syncHr);
+        $('pattern').textContent = 'Kies een programma en tik op Start oefening';
+        $('status').textContent = 'Gesynchroniseerd'; $('status').className = 'chip ok';
+        $('startBtn').disabled = false;
+      }
+    }, 250);
+    (function idle(){ if(!syncing) { draw(); return; } draw(); requestAnimationFrame(idle); })();
+  }
+
+  function reset(){
+    var hr0 = (source === 'live' && live.syncHr) ? live.syncHr : clamp(parseFloat($('startHr').value) || 78, 50, 120);
+    var t = PROGS[prog];
+    S = {
+      mode: 'meet', measureLen: 15, measSum: 0, measN: 0,
+      hr0: hr0, hrBase: hr0, hrRaw: hr0, hrShown: hr0,
+      tin: 3, tout: 3, startIn: 3, startOut: 3,
+      tgtIn: t.tin, tgtOut: t.tout,
+      inhale: true, phaseT: 0, t: 0, breaths: 0,
+      cycleSum: 0, cycleN: 0, cycleMin: 999, cycleMax: 0, prevAvg: null,
+      force: null, forceLeft: 0, fwd: 0, back: 0, hold: 0,
+      hist: [], sampleT: 0, status: 'Meten · synchroniseren', statusCls: 'lead',
+      dur: parseFloat($('dur').value), b: 0.2
+    };
+    S.startCycle = 6; S.tgtCycle = S.tgtIn + S.tgtOut; S.brStart = 10;
+  }
+
+  // after measuring: start at an average breathing pace derived from the measured heart rate
+  function beginBreathing(){
+    var hr = S.measSum / Math.max(1, S.measN);
+    S.hr0 = hr; S.hrMeasured = hr;
+    var perMin = clamp(hr / 7.8, 8, 12);           // 78 bpm -> 10 per min -> 3 s in, 3 s out
+    var half = Math.round((60 / perMin) / 2 * 10) / 10;
+    S.tin = S.startIn = Math.min(half, S.tgtIn);
+    S.tout = S.startOut = Math.min(half, S.tgtOut);
+    S.startCycle = S.tin + S.tout; S.brStart = 60 / S.startCycle;
+    S.mode = 'adem'; S.inhale = true; S.phaseT = 0;
+    S.status = 'Gemeten: ' + Math.round(hr) + ' bpm · meelopen'; S.statusCls = '';
+    tone(440);
+  }
+
+  function tone(f){
+    if(!$('sound').checked || !audio) return;
+    try{
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, audio.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.12, audio.currentTime + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.7);
+      o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.75);
+    }catch(e){}
+  }
+
+  function followFactor(){
+    if(S.force === 'yes') return 0.95;
+    if(S.force === 'no') return 0.03;
+    return parseFloat($('follow').value) / 100;
+  }
+
+  function move(step){
+    // positive = toward target, negative = back toward start
+    function m(cur, st, tg){
+      var dir = tg >= st ? 1 : -1;
+      var v = cur + dir * step;
+      var lo = Math.min(st, tg), hi = Math.max(st, tg);
+      return clamp(Math.round(v*10)/10, lo, hi);
+    }
+    S.tin = m(S.tin, S.startIn, S.tgtIn);
+    S.tout = m(S.tout, S.startOut, S.tgtOut);
+  }
+
+  function endOfCycle(){
+    S.breaths++;
+    if(S.stale){
+      S.hold++; S.status = 'Geen hartslag binnen · we wachten'; S.statusCls = 'wait';
+      S.cycleSum = 0; S.cycleN = 0; S.cycleMin = 999; S.cycleMax = 0;
+      return;
+    }
+    var avg = S.cycleSum / Math.max(1, S.cycleN), amp = S.cycleMax - S.cycleMin;
+    if(S.breaths <= 2 || S.prevAvg === null){
+      S.status = 'Meelopen op jouw tempo'; S.statusCls = '';
+    } else {
+      var d = S.prevAvg - avg; // positive = HR dropping
+      var atTarget = Math.abs(S.tin - S.tgtIn) < 0.05 && Math.abs(S.tout - S.tgtOut) < 0.05;
+      var cyc = S.tin + S.tout, thr = 0.12 * cyc;
+      var atStart = Math.abs(S.tin - S.startIn) < 0.05 && Math.abs(S.tout - S.startOut) < 0.05;
+      if(d > 1.2 && amp >= thr * 1.5){ move(0.2); S.fwd++; S.status = atTarget ? 'Op doelritme · je loopt voor' : 'Je loopt voor · we versnellen'; S.statusCls = 'lead'; }
+      else if(d > -0.4 && amp >= thr * 1.5){ move(0.1); S.fwd++; S.status = atTarget ? 'Op doelritme · houd vast' : 'Je volgt · een stapje verder'; S.statusCls = 'ok'; }
+      else if(d < -0.8 || amp < thr * 0.7){
+        if(atStart){ S.hold++; S.status = 'Je volgt nog niet · we wachten'; }
+        else { move(-0.1); S.back++; S.status = 'Te snel · we doen een stapje terug'; }
+        S.statusCls = 'wait';
+      }
+      else { S.hold++; S.status = 'Even vasthouden'; S.statusCls = ''; }
+    }
+    S.prevAvg = avg; S.cycleSum = 0; S.cycleN = 0; S.cycleMin = 999; S.cycleMax = 0;
+    if(S.forceLeft > 0){ S.forceLeft--; if(S.forceLeft === 0) S.force = null; }
+  }
+
+  function step(dt){
+    if(S.mode === 'meet'){
+      S.t += dt;
+      S.b = 0.2 + 0.08 * Math.sin(S.t * 2 * Math.PI / 4);   // calm idle pulse while measuring
+      var raw0 = S.hrBase + (Math.random() - 0.5) * 1.6;
+      S.hrRaw += (raw0 - S.hrRaw) * dt / 0.8;
+      S.hrShown += (S.hrRaw - S.hrShown) * dt / 1.0;
+      S.measSum += S.hrShown; S.measN++;
+      S.sampleT += dt;
+      if(S.sampleT >= 0.5){ S.sampleT = 0; S.hist.push({t:S.t, hr:S.hrShown, br:null}); }
+      if(S.t >= S.measureLen) beginBreathing();
+      return;
+    }
+    S.t += dt; S.phaseT += dt;
+    var len = S.inhale ? S.tin : S.tout;
+    if(S.phaseT >= len){
+      S.phaseT -= len;
+      if(!S.inhale){ endOfCycle(); }
+      S.inhale = !S.inhale;
+      tone(S.inhale ? 440 : 330);
+    }
+    len = S.inhale ? S.tin : S.tout;
+    var p = clamp(S.phaseT / len, 0, 1), e = 0.5 - 0.5*Math.cos(Math.PI*p);
+    S.b = S.inhale ? e : 1 - e;
+
+    var cyc = S.tin + S.tout;
+    if(source === 'live'){
+      // real heart rate from the watch
+      var fresh = live.bpm && (performance.now() - live.t) < 5000;
+      S.stale = !fresh;
+      if(fresh) S.hrShown = live.bpm;
+    } else {
+      // heart model (simulation)
+      var f = followFactor();
+      var progress = clamp((cyc - S.startCycle) / Math.max(0.1, S.tgtCycle - S.startCycle), 0, 1);
+      var tgt = f < 0.15 ? S.hr0 + 3 : S.hr0 - 13 * progress * f - 2 * f;
+      S.hrBase += (tgt - S.hrBase) * dt / 9;
+      var reson = Math.exp(-Math.pow((cyc - 10) / 5, 2));
+      var amp = (1 + 7 * f) * (0.45 + 0.55 * reson);
+      var noise = (Math.random() - 0.5) * 0.8;
+      var raw = S.hrBase + amp * (S.b - 0.5) + noise;
+      S.hrRaw += (raw - S.hrRaw) * dt / 0.8;
+      S.hrShown += (S.hrRaw - S.hrShown) * dt / 1.0;
+    }
+    S.cycleSum += S.hrShown; S.cycleN++;
+    S.cycleMin = Math.min(S.cycleMin, S.hrShown); S.cycleMax = Math.max(S.cycleMax, S.hrShown);
+
+    S.sampleT += dt;
+    if(S.sampleT >= 0.5){ S.sampleT = 0; S.hist.push({t:S.t, hr:S.hrShown, br:60/cyc}); }
+    if(S.t >= S.dur) finish();
+  }
+
+  // drawing
+  var cv = $('cloud'), cx = cv.getContext('2d'), ch = $('chart'), chx = ch.getContext('2d');
+  function fit(c){ var r = window.devicePixelRatio || 1, w = c.clientWidth; c.width = w * r; c.height = parseFloat(c.getAttribute('height')) * r; c._r = r; }
+  function sizeAll(){ cv.setAttribute("height","280"); ch.setAttribute('height','120'); fit(cv); fit(ch); }
+  window.addEventListener('resize', function(){ sizeAll(); draw(); });
+
+  function drawCloud(){
+    var r = cv._r || 1, W = cv.width / r, H = 280;
+    cx.setTransform(r,0,0,r,0,0); cx.clearRect(0,0,W,H);
+    var b = running ? S.b : (syncing ? 0.2 + 0.08 * Math.sin(performance.now() / 1000 * Math.PI / 2) : 0.15), R = 38 + b * 78, mx = W/2, my = H/2;
+    var g = cx.createRadialGradient(mx, my, R*0.2, mx, my, R*1.9);
+    g.addColorStop(0, 'rgba(59,120,212,0.35)'); g.addColorStop(1, 'rgba(59,120,212,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.arc(mx, my, R*1.9, 0, Math.PI*2); cx.fill();
+    var blobs = [[0,0,1],[-0.62,0.12,0.62],[0.62,0.1,0.66],[-0.3,-0.42,0.6],[0.32,-0.38,0.58],[0,0.36,0.62]];
+    var t = running ? S.t : 0;
+    cx.fillStyle = 'rgba(214,228,250,0.9)';
+    blobs.forEach(function(bl, i){
+      var wob = 1 + 0.03 * Math.sin(t * 0.9 + i);
+      cx.beginPath(); cx.arc(mx + bl[0]*R, my + bl[1]*R, bl[2]*R*0.72*wob, 0, Math.PI*2); cx.fill();
+    });
+    cx.fillStyle = 'rgba(255,255,255,0.35)';
+    cx.beginPath(); cx.arc(mx - R*0.2, my - R*0.25, R*0.3, 0, Math.PI*2); cx.fill();
+  }
+
+  function drawChart(){
+    var r = ch._r || 1, W = ch.width / r, H = 120;
+    chx.setTransform(r,0,0,r,0,0); chx.clearRect(0,0,W,H);
+    chx.strokeStyle = '#1f242b'; chx.lineWidth = 1;
+    for(var i=0;i<=3;i++){ var y = 8 + i*(H-24)/3; chx.beginPath(); chx.moveTo(28,y); chx.lineTo(W-26,y); chx.stroke(); }
+    chx.fillStyle = '#7d8691'; chx.font = '10px Inter, sans-serif';
+    chx.fillText('100', 2, 12); chx.fillText('50', 6, H-14);
+    chx.textAlign = 'right'; chx.fillText('20', W-2, 12); chx.fillText('0', W-2, H-14); chx.textAlign = 'left';
+    if(!S.hist || S.hist.length < 2) return;
+    var span = 180, t1 = S.t, t0 = Math.max(0, t1 - span);
+    var X = function(t){ return 28 + (t - t0) / span * (W - 54); };
+    var Yh = function(v){ return 8 + (1 - (clamp(v,50,100) - 50) / 50) * (H - 24); };
+    var Yb = function(v){ return 8 + (1 - clamp(v,0,20) / 20) * (H - 24); };
+    function line(sel, Y, col){
+      chx.strokeStyle = col; chx.lineWidth = 2; chx.beginPath(); var st = false;
+      S.hist.forEach(function(s){ if(s.t < t0 || sel(s) === null) return; var x = X(s.t), y = Y(sel(s)); if(!st){ chx.moveTo(x,y); st = true; } else chx.lineTo(x,y); });
+      chx.stroke();
+    }
+    line(function(s){return s.br;}, Yb, '#F28C28');
+    line(function(s){return s.hr;}, Yh, '#3b78d4');
+  }
+
+  function draw(){
+    drawCloud(); drawChart();
+    if(!running) return;
+    if(S.mode === 'meet'){
+      $('phase').textContent = 'Meten…';
+      $('count').textContent = Math.ceil(S.measureLen - S.t);
+      $('pattern').textContent = 'Adem rustig zoals je gewend bent';
+      $('prog').style.width = (S.t / S.measureLen * 100) + '%';
+      $('prog').style.background = 'var(--quiet)';
+      $('hrNow').textContent = Math.round(S.hrShown);
+      var st0 = $('status'); st0.textContent = S.status; st0.className = 'chip ' + S.statusCls;
+      $('clock').textContent = mmss(S.t) + ' / ' + mmss(S.dur);
+      return;
+    }
+    var len = S.inhale ? S.tin : S.tout;
+    $('phase').textContent = S.inhale ? 'Adem in' : 'Adem uit';
+    $('count').textContent = fmt(Math.max(0, len - S.phaseT), 1);
+    $('pattern').textContent = 'in ' + fmt(S.tin,1) + ' s · uit ' + fmt(S.tout,1) + ' s → doel ' + S.tgtIn + '-' + S.tgtOut;
+    $('prog').style.width = (S.phaseT / len * 100) + '%';
+    $('prog').style.background = S.inhale ? 'var(--blue)' : 'var(--green)';
+    $('hrNow').textContent = Math.round(S.hrShown);
+    var st = $('status'); st.textContent = S.status; st.className = 'chip ' + S.statusCls;
+    $('clock').textContent = mmss(S.t) + ' / ' + mmss(S.dur);
+  }
+
+  function loop(ts){
+    if(!running) return;
+    var dt = Math.min(0.1, (ts - last) / 1000); last = ts;
+    var sp = parseFloat($('speed').value), sub = Math.ceil(sp * dt / 0.02);
+    for(var i=0;i<sub && running;i++) step(sp * dt / sub);
+    draw();
+    if(running) requestAnimationFrame(loop);
+  }
+
+  function avgHr(from, to){
+    var xs = S.hist.filter(function(s){ return s.t >= from && s.t <= to; });
+    if(!xs.length) return S.hrShown;
+    return xs.reduce(function(a,s){ return a + s.hr; }, 0) / xs.length;
+  }
+
+  function finish(){
+    running = false;
+    var a = S.hrMeasured || avgHr(0, 15), b = avgHr(S.t - 20, S.t);
+    $('sStart').textContent = Math.round(a) + ' bpm';
+    $('sEnd').textContent = Math.round(b) + ' bpm';
+    var d = Math.round(b - a); $('sDelta').textContent = (d > 0 ? '+' : '') + d + ' bpm';
+    $('sTime').textContent = mmss(S.t);
+    $('sBr').textContent = fmt(S.brStart,1) + ' → ' + fmt(60/(S.tin+S.tout),1);
+    $('sSteps').textContent = S.fwd + ' / ' + S.back;
+    $('summary').classList.add('show');
+    $('startBtn').disabled = source === 'live' && !live.synced; $('stopBtn').disabled = true;
+    $('startBtn').textContent = source === 'live' ? 'Start oefening' : 'Start';
+    $('phase').textContent = 'Klaar'; $('count').textContent = '–'; $('pattern').textContent = source === 'live' ? 'Tik op Start oefening voor een nieuwe ronde' : 'Druk op start';
+    if(source === 'live' && live.synced) setSteps(3, 2);
+    draw();
+  }
+
+  $('startBtn').onclick = function(){
+    if(source === 'live' && !live.synced){ setConn('wait', 'Verbind eerst je horloge en wacht op de synchronisatie'); return; }
+    try{ if(!audio){ var AC = window.AudioContext || window.webkitAudioContext; if(AC) audio = new AC(); } if(audio && audio.state === 'suspended') audio.resume(); }catch(e){ audio = null; }
+    $('summary').classList.remove('show');
+    reset();
+    if(source === 'live'){
+      // synchronisation already done in step 2: start breathing straight away
+      S.measSum = live.syncHr; S.measN = 1; S.hrShown = live.bpm || live.syncHr;
+      beginBreathing(); setSteps(3, 3);
+    }
+    running = true; last = performance.now();
+    $('startBtn').disabled = true; $('stopBtn').disabled = false;
+    requestAnimationFrame(loop);
+  };
+  $('stopBtn').onclick = function(){ if(running) finish(); };
+  $('againBtn').onclick = function(){ $('summary').classList.remove('show'); };
+  $('yesBtn').onclick = function(){ if(running){ S.force = 'yes'; S.forceLeft = 3; } };
+  $('noBtn').onclick = function(){ if(running){ S.force = 'no'; S.forceLeft = 3; } };
+
+  reset(); sizeAll(); draw();
+  setSource(hasBT && !inFrame ? 'live' : 'sim');
+})();
+</script>
+</body>
+</html>
