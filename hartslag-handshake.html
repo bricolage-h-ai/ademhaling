@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hartslag-handshake – Forerunner 165</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d10;--panel:#14171c;--line:#252a31;--ink:#f2f3f5;--quiet:#9aa3ad;--blue:#3b78d4;--green:#2FA36B;--orange:#F28C28;--red:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:520px;margin:0 auto;padding:24px 18px 48px;display:flex;flex-direction:column;gap:16px}
+h1{margin:0;font-size:24px;font-weight:700}
+p{margin:0;color:var(--quiet);font-size:14px;line-height:1.5}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.check{display:flex;flex-direction:column;gap:8px;font-size:13px}
+.check div{display:flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--quiet);flex-shrink:0}
+.dot.ok{background:var(--green)}.dot.bad{background:var(--red)}.dot.wait{background:var(--orange)}
+.btn{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:#16191e;color:var(--ink);font:600 15px Inter,sans-serif;cursor:pointer}
+.btn.primary{background:var(--blue);border-color:var(--blue)}
+.btn:disabled{opacity:.4;cursor:default}
+.btns{display:flex;flex-direction:column;gap:8px}
+.live{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 16px}
+.bpm{font-size:84px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.unit{font-size:14px;color:var(--quiet)}
+.heart{width:16px;height:16px;border-radius:50%;background:var(--red);opacity:.25;transition:opacity .15s, transform .15s}
+.heart.beat{opacity:1;transform:scale(1.35)}
+.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;margin-top:12px}
+.meta div{background:#101317;border-radius:10px;padding:10px}
+.meta b{display:block;font-size:15px;font-variant-numeric:tabular-nums;word-break:break-word}
+.meta span{font-size:11px;color:var(--quiet)}
+canvas{display:block;width:100%;height:120px}
+pre{margin:0;font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--quiet);white-space:pre-wrap;max-height:180px;overflow:auto}
+ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
+ol b{color:var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.small{font-size:12px;color:var(--quiet)}
+.copy{background:none;border:1px solid var(--line);color:var(--quiet);border-radius:8px;padding:6px 10px;font:500 12px Inter,sans-serif;cursor:pointer;min-height:32px}
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Hartslag-handshake</h1>
+    <p style="margin-top:6px">Stap 1 van de ademhalingsapp: lukt het om de hartslag van je Forerunner 165 live op deze telefoon binnen te halen?</p>
+  </div>
+
+  <div class="card">
+    <ol>
+      <li><b>Horloge:</b> zet <b>Hartslag uitzenden</b> aan (instellingen voor de polshartslag, of het bedieningsmenu).</li>
+      <li><b>Telefoon:</b> Bluetooth aan, en open deze pagina in <b>Chrome</b> (Android of laptop).</li>
+      <li>Tik op <b>Verbind horloge</b> en kies je Forerunner in de lijst.</li>
+    </ol>
+  </div>
+
+  <div class="card check" aria-label="Controle">
+    <div><span class="dot" id="dSupport"></span><span id="tSupport">Browser controleren…</span></div>
+    <div><span class="dot" id="dFrame"></span><span id="tFrame">Venster controleren…</span></div>
+    <div><span class="dot" id="dConn"></span><span id="tConn">Nog niet verbonden</span></div>
+  </div>
+
+  <div class="btns">
+    <button type="button" class="btn primary" id="connectBtn">Verbind horloge</button>
+    <button type="button" class="btn" id="allBtn">Zie ik niets? Toon alle apparaten</button>
+    <button type="button" class="btn" id="discBtn" disabled>Verbreek verbinding</button>
+  </div>
+
+  <div class="card live" aria-live="polite">
+    <div class="row" style="gap:10px"><span class="heart" id="heart" aria-hidden="true"></span><span class="unit" id="devName">Geen apparaat</span></div>
+    <div class="bpm" id="bpm">--</div>
+    <div class="unit">bpm</div>
+    <div class="meta">
+      <div><b id="mCount">0</b><span>metingen ontvangen</span></div>
+      <div><b id="mAge">–</b><span>laatste meting</span></div>
+      <div><b id="mRR">–</b><span>tijd tussen slagen (RR)</span></div>
+      <div><b id="mContact">–</b><span>huidcontact</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:8px"><span class="small">Laatste 60 seconden</span><span class="small" id="range"></span></div>
+    <canvas id="chart" aria-label="Grafiek van de hartslag" role="img"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:8px"><span class="small">Logboek</span><button type="button" class="copy" id="copyBtn">Kopieer</button></div>
+    <pre id="log"></pre>
+  </div>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var device = null, chr = null, samples = [], count = 0, lastT = 0, rrSeen = false;
+
+  function log(msg){
+    var t = new Date().toLocaleTimeString('nl-NL');
+    $('log').textContent = '[' + t + '] ' + msg + '\n' + $('log').textContent;
+  }
+  function setDot(id, cls, text, tid){ $(id).className = 'dot ' + cls; if(tid) $(tid).textContent = text; }
+
+  // environment checks
+  var hasBT = !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
+  var inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
+  setDot('dSupport', hasBT ? 'ok' : 'bad', hasBT ? 'Web Bluetooth beschikbaar' : 'Web Bluetooth niet beschikbaar in deze browser (gebruik Chrome op Android of laptop)', 'tSupport');
+  setDot('dFrame', inFrame ? 'wait' : 'ok', inFrame ? 'Pagina draait in een ingesloten venster: Bluetooth kan geblokkeerd zijn. Lukt het niet, open dan het HTML-bestand los in Chrome.' : 'Pagina draait als los venster', 'tFrame');
+  log('Start · Bluetooth ' + (hasBT ? 'ja' : 'nee') + ' · ingesloten ' + (inFrame ? 'ja' : 'nee') + ' · ' + navigator.userAgent.split(') ')[0] + ')');
+  if(!hasBT){ $('connectBtn').disabled = true; $('allBtn').disabled = true; }
+
+  // Heart Rate Measurement (0x2A37) parser
+  function parse(dv){
+    var flags = dv.getUint8(0), i = 1, out = {};
+    var u16 = flags & 0x01;
+    out.bpm = u16 ? dv.getUint16(i, true) : dv.getUint8(i); i += u16 ? 2 : 1;
+    var contactSupported = flags & 0x04, contact = flags & 0x02;
+    out.contact = contactSupported ? (contact ? 'ja' : 'nee') : 'onbekend';
+    if(flags & 0x08){ i += 2; } // energy expended
+    out.rr = [];
+    if(flags & 0x10){ while(i + 1 < dv.byteLength){ out.rr.push(Math.round(dv.getUint16(i, true) / 1024 * 1000)); i += 2; } }
+    return out;
+  }
+
+  function onData(e){
+    var m = parse(e.target.value), now = performance.now();
+    count++; lastT = now;
+    samples.push({t: now, bpm: m.bpm});
+    samples = samples.filter(function(s){ return now - s.t <= 60000; });
+    $('bpm').textContent = m.bpm;
+    $('mCount').textContent = count;
+    $('mContact').textContent = m.contact;
+    if(m.rr.length){ rrSeen = true; $('mRR').textContent = m.rr.join(', ') + ' ms'; }
+    else if(!rrSeen){ $('mRR').textContent = 'niet meegestuurd'; }
+    var h = $('heart'); h.classList.add('beat'); setTimeout(function(){ h.classList.remove('beat'); }, 160);
+    if(count === 1) log('Eerste meting ontvangen: ' + m.bpm + ' bpm' + (m.rr.length ? ' · RR ' + m.rr.join(',') + ' ms' : ' · geen RR'));
+    if(count === 10) log('10 metingen binnen · handshake geslaagd');
+    draw();
+  }
+
+  async function connect(acceptAll){
+    try{
+      log(acceptAll ? 'Zoek alle apparaten…' : 'Zoek hartslagapparaten…');
+      setDot('dConn', 'wait', 'Kies je horloge in de lijst…', 'tConn');
+      var opts = acceptAll ? {acceptAllDevices: true, optionalServices: ['heart_rate']} : {filters: [{services: ['heart_rate']}]};
+      device = await navigator.bluetooth.requestDevice(opts);
+      $('devName').textContent = device.name || 'Onbekend apparaat';
+      log('Gekozen: ' + (device.name || device.id));
+      device.addEventListener('gattserverdisconnected', function(){
+        setDot('dConn', 'bad', 'Verbinding verbroken', 'tConn'); log('Verbinding verbroken');
+        $('discBtn').disabled = true; $('connectBtn').disabled = false;
+      });
+      setDot('dConn', 'wait', 'Verbinden…', 'tConn');
+      var server = await device.gatt.connect(); log('Verbonden met GATT-server');
+      var svc = await server.getPrimaryService('heart_rate'); log('Hartslagservice gevonden (0x180D)');
+      chr = await svc.getCharacteristic('heart_rate_measurement');
+      chr.addEventListener('characteristicvaluechanged', onData);
+      await chr.startNotifications(); log('Meldingen gestart (0x2A37) · wachten op metingen…');
+      setDot('dConn', 'ok', 'Verbonden met ' + (device.name || 'apparaat'), 'tConn');
+      $('discBtn').disabled = false; $('connectBtn').disabled = true;
+    }catch(err){
+      var msg = (err && err.name ? err.name + ': ' : '') + (err && err.message ? err.message : err);
+      log('Fout · ' + msg);
+      var hint = 'Niet gelukt';
+      if(/SecurityError|not allowed|disallowed|permissions policy/i.test(msg)) hint = 'Bluetooth geblokkeerd in dit venster: open het HTML-bestand los in Chrome';
+      else if(/NotFoundError|cancel/i.test(msg)) hint = 'Geen apparaat gekozen. Staat Hartslag uitzenden aan?';
+      else if(/heart_rate|No Services|NotFoundError: No/i.test(msg)) hint = 'Dit apparaat zendt geen hartslag uit';
+      setDot('dConn', 'bad', hint, 'tConn');
+    }
+  }
+
+  $('connectBtn').onclick = function(){ connect(false); };
+  $('allBtn').onclick = function(){ connect(true); };
+  $('discBtn').onclick = function(){ if(device && device.gatt.connected){ device.gatt.disconnect(); } };
+  $('copyBtn').onclick = function(){ try{ navigator.clipboard.writeText($('log').textContent).then(function(){ $('copyBtn').textContent = 'Gekopieerd'; }, function(){}); }catch(e){} };
+
+  setInterval(function(){
+    if(!lastT) return;
+    var s = (performance.now() - lastT) / 1000;
+    $('mAge').textContent = s < 1.5 ? 'zojuist' : Math.round(s) + ' s geleden';
+  }, 500);
+
+  var cv = $('chart'), cx = cv.getContext('2d');
+  function draw(){
+    var r = window.devicePixelRatio || 1, W = cv.clientWidth, H = 120;
+    if(cv.width !== W * r){ cv.width = W * r; cv.height = H * r; }
+    cx.setTransform(r,0,0,r,0,0); cx.clearRect(0,0,W,H);
+    if(samples.length < 2){ return; }
+    var lo = Math.min.apply(null, samples.map(function(s){return s.bpm;})) - 3;
+    var hi = Math.max.apply(null, samples.map(function(s){return s.bpm;})) + 3;
+    var now = performance.now();
+    var X = function(t){ return 4 + (1 - (now - t) / 60000) * (W - 8); };
+    var Y = function(v){ return 6 + (1 - (v - lo) / (hi - lo)) * (H - 12); };
+    cx.strokeStyle = '#1f242b'; cx.lineWidth = 1;
+    [0.25,0.5,0.75].forEach(function(f){ cx.beginPath(); cx.moveTo(0, H*f); cx.lineTo(W, H*f); cx.stroke(); });
+    cx.strokeStyle = '#3b78d4'; cx.lineWidth = 2; cx.beginPath();
+    samples.forEach(function(s, i){ var x = X(s.t), y = Y(s.bpm); if(i) cx.lineTo(x, y); else cx.moveTo(x, y); });
+    cx.stroke();
+    $('range').textContent = Math.round(lo + 3) + '–' + Math.round(hi - 3) + ' bpm';
+  }
+  window.addEventListener('resize', draw);
+})();
+</script>
+</body>
+</html>
