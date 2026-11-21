@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V21 – live met je Forerunner</title>
+<title>Ademhalingsapp V22 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -154,7 +154,13 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 .phone.exercise-mode #flow{display:none!important}
 .phone:not(.exercise-mode) #stopBtn{display:none}
 .phone.live-flow:not(.exercise-mode)>.stage,.phone.live-flow:not(.exercise-mode)>.readout,.phone.live-flow:not(.exercise-mode)>.bar,.phone.live-flow:not(.exercise-mode)>.stats,.phone.live-flow:not(.exercise-mode)>div:has(>#chart){display:none!important}
+.phone.exercise-mode.graph-view .stage{height:440px}
+.phone.exercise-mode #rampTimer{display:none}
+.phone.exercise-mode #rampPanel{gap:5px!important}
+.phone.exercise-mode #rampLabel{font-size:13px!important}
+.ver{font-size:11px;color:#5d6672;text-align:center;letter-spacing:.06em}
 @media(max-height:760px){
+ .phone.exercise-mode.graph-view .stage{height:360px}
  .phone.exercise-mode{gap:10px;padding-top:14px}
  .phone.exercise-mode .stage{height:285px}
  .phone.exercise-mode .count{font-size:36px}
@@ -275,6 +281,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     </div>
     </div>
     <label class="toggle"><input type="checkbox" id="sound" checked> Zachte toon bij wisselen</label>
+    <div class="ver" id="ver">V22</div>
 
     <div class="summary" id="summary" role="dialog" aria-label="Samenvatting">
       <h2>Sessie klaar</h2>
@@ -326,7 +333,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -372,7 +379,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
     $('startBtn').disabled = s === 'live' && !live.synced;
     $('startBtn').textContent = 'Start oefening';
-    // V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
+    // V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
     $('blk1').hidden = s !== 'live';
     $('measureField').hidden = s !== 'live';
     $('speedField').hidden = s === 'live';
@@ -780,6 +787,9 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     }catch(e){}
   }
 
+  // V22: korte trilling bij elke wissel (Chrome op Android); stil waar het niet kan.
+  function buzz(){ try{ if(navigator.vibrate) navigator.vibrate(S.inhale ? 45 : 25); }catch(e){} }
+
   function followFactor(){
     if(S.force === 'yes') return 0.95;
     if(S.force === 'no') return 0.03;
@@ -874,6 +884,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       if(!S.inhale){ endOfCycle(); }
       S.inhale = !S.inhale;
       tone(S.inhale ? 440 : 330);
+      buzz();
     }
     len = S.inhale ? S.tin : S.tout;
     var p = clamp(S.phaseT / len, 0, 1), e = 0.5 - 0.5*Math.cos(Math.PI*p);
@@ -978,54 +989,57 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     cx.setTransform(r,0,0,r,0,0); cx.clearRect(0,0,W,H);
     var PAST = 8, FUT = 10, nowX = W * 0.44;
     var fut = futurePath(FUT);
+    // V22: vaste schaal per oefening; de hoogste inademtijd komt bijna tegen de bovenkant.
+    if(!S.gMax) S.gMax = Math.max(S.startIn, S.tgtIn, S.tin) * 1.04;
     var maxH = S.tin;
     S.peaks.forEach(function(p){ maxH = Math.max(maxH, p.h); });
     fut.peaks.forEach(function(p){ maxH = Math.max(maxH, p.h); });
-    var yMax = Math.max(5, Math.ceil(maxH + 0.8));
-    var top = 78, bot = H - 26;
+    if(maxH * 1.02 > S.gMax) S.gMax = maxH * 1.04;
+    var yMax = S.gMax;
+    var top = 66, bot = H - 14;
     var X = function(t){ return nowX + (t - S.t) / (PAST + FUT) * W; };
     var Y = function(h){ return bot - h / yMax * (bot - top); };
-    cx.font = '11px Inter, sans-serif'; cx.textAlign = 'left';
-    for(var g = 1; g <= yMax; g++){
-      cx.strokeStyle = 'rgba(170,190,215,.10)'; cx.lineWidth = 1;
-      cx.beginPath(); cx.moveTo(30, Y(g)); cx.lineTo(W - 8, Y(g)); cx.stroke();
-    }
-    cx.strokeStyle = 'rgba(170,190,215,.25)'; cx.beginPath(); cx.moveTo(30, bot); cx.lineTo(W - 8, bot); cx.stroke();
-    function path(pts, alpha, width, dash){
-      cx.setLineDash(dash || []); cx.lineWidth = width; cx.lineCap = 'round'; cx.lineJoin = 'round';
+    // V22: geen raster meer, alleen een zachte bodemlijn.
+    cx.strokeStyle = 'rgba(170,190,215,.14)'; cx.lineWidth = 1;
+    cx.beginPath(); cx.moveTo(0, bot); cx.lineTo(W, bot); cx.stroke();
+    function path(pts, alpha, width){
+      cx.lineWidth = width; cx.lineCap = 'round'; cx.lineJoin = 'round';
       for(var i = 1; i < pts.length; i++){
         var a = pts[i-1], b = pts[i];
         cx.strokeStyle = (b.inh ? 'rgba(217,68,63,' : 'rgba(59,120,212,') + alpha + ')';
         cx.beginPath(); cx.moveTo(X(a.t), Y(a.h)); cx.lineTo(X(b.t), Y(b.h)); cx.stroke();
       }
-      cx.setLineDash([]);
     }
     var nowH = graphH(S.inhale, S.phaseT, S.tin, S.tout);
     var past = S.ghist.filter(function(p){ return p.t >= S.t - PAST - 0.5; }).concat([{t: S.t, h: nowH, inh: S.inhale}]);
-    path([{t: S.t, h: nowH, inh: S.inhale}].concat(fut.pts), 0.35, 3, [6, 6]);
-    path(past, 0.95, 4);
-    function peakLabel(p, alpha){
-      var x = X(p.t); if(x < 34 || x > W - 20) return;
-      cx.fillStyle = 'rgba(255,255,255,' + alpha + ')'; cx.font = '600 12px Inter, sans-serif'; cx.textAlign = 'center';
-      cx.fillText(fmt(p.h, 1), x, Y(p.h) - 9);
+    // V22: zachte gloed onder de afgelegde golf.
+    if(past.length > 1){
+      var glow = cx.createLinearGradient(0, top, 0, bot);
+      glow.addColorStop(0, 'rgba(140,165,210,.20)');
+      glow.addColorStop(1, 'rgba(140,165,210,0)');
+      cx.fillStyle = glow; cx.beginPath(); cx.moveTo(X(past[0].t), bot);
+      past.forEach(function(p){ cx.lineTo(X(p.t), Y(p.h)); });
+      cx.lineTo(X(past[past.length-1].t), bot); cx.closePath(); cx.fill();
     }
-    S.peaks.forEach(function(p){ peakLabel(p, 0.85); });
-    fut.peaks.forEach(function(p){ peakLabel(p, 0.45); });
-    cx.strokeStyle = 'rgba(255,255,255,.18)'; cx.lineWidth = 1;
-    cx.beginPath(); cx.moveTo(nowX, top - 10); cx.lineTo(nowX, bot); cx.stroke();
+    // V22: komende golf als vage, doorgetrokken lijn.
+    path([{t: S.t, h: nowH, inh: S.inhale}].concat(fut.pts), 0.22, 3);
+    path(past, 0.95, 4);
+    cx.strokeStyle = 'rgba(255,255,255,.12)'; cx.lineWidth = 1;
+    cx.beginPath(); cx.moveTo(nowX, top - 6); cx.lineTo(nowX, bot); cx.stroke();
     var col = S.inhale ? '217,68,63' : '59,120,212';
     cx.fillStyle = 'rgba(' + col + ',.25)'; cx.beginPath(); cx.arc(nowX, Y(nowH), 14, 0, Math.PI*2); cx.fill();
     cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(nowX, Y(nowH), 7, 0, Math.PI*2); cx.fill();
     cx.fillStyle = 'rgb(' + col + ')'; cx.beginPath(); cx.arc(nowX, Y(nowH), 4.5, 0, Math.PI*2); cx.fill();
-    cx.fillStyle = '#fff'; cx.font = '700 22px Inter, sans-serif'; cx.textAlign = 'left';
-    cx.fillText(S.inhale ? 'in' : 'uit', nowX + 18, Y(nowH) + (S.inhale ? -12 : 26));
-    cx.textAlign = 'left';
+    // V22: in/uit op een vaste plek linksboven, in de fasekleur.
+    cx.fillStyle = 'rgb(' + (S.inhale ? '235,110,105' : '120,170,240') + ')';
+    cx.font = '700 26px Inter, sans-serif'; cx.textAlign = 'left';
+    cx.fillText(S.inhale ? 'in' : 'uit', 18, 44);
   }
   $('viewToggle').onclick = function(){
     graphView = !graphView;
     $('phone').classList.toggle('graph-view', graphView);
     $('viewToggle').textContent = graphView ? 'Cirkel' : 'Grafiek';
-    draw();
+    sizeAll(); draw();
   };
 
   // V18: rood (inademen) en blauw (uitademen) worden nooit rechtstreeks gemengd;
