@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V18 – live met je Forerunner</title>
+<title>Ademhalingsapp V19 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -126,6 +126,10 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 .phone.exercise-mode .btns{margin-top:2px}
 .phone.exercise-mode #startBtn{display:none}
 .phone.exercise-mode #stopBtn{flex:1;background:#202630;border-color:#303741;color:#d6dbe2}
+.viewToggle{display:none;position:absolute;top:10px;right:10px;z-index:4;border:1px solid #303741;background:rgba(20,23,28,.85);color:#d6dbe2;font:600 13px Inter,sans-serif;padding:8px 12px;border-radius:999px;cursor:pointer;min-height:36px}
+.phone.exercise-mode .viewToggle{display:block}
+.phone.graph-view .breathRing,.phone.graph-view .breathPhaseMark{display:none!important}
+.phone.graph-view .breathCue{top:34px;font-size:40px}
 @media(max-height:760px){
  .phone.exercise-mode{gap:10px;padding-top:14px}
  .phone.exercise-mode .stage{height:285px}
@@ -186,6 +190,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       </svg>
       <div class="breathCue" id="breathCue" aria-live="off"><span id="breathCueNumber">4</span><span class="fraction" id="breathCueFraction">.00</span><span class="unit">sec</span></div>
       <div class="breathPhaseMark" id="breathPhaseMark">in</div>
+      <button type="button" class="viewToggle" id="viewToggle" aria-label="Wissel weergave">Grafiek</button>
     </div>
     <div class="readout">
       <div><div class="phase" id="phase">Klaar</div><div class="pattern" id="pattern">Druk op start</div></div>
@@ -279,7 +284,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -601,7 +606,8 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       cycleSum: 0, cycleN: 0, cycleMin: 999, cycleMax: 0, prevAvg: null,
       force: null, forceLeft: 0, fwd: 0, back: 0, hold: 0,
       hist: [], sampleT: 0, status: 'Meten · synchroniseren', statusCls: 'lead',
-      dur: parseFloat($('dur').value), b: 0.2, breathT: 0
+      dur: parseFloat($('dur').value), b: 0.2, breathT: 0,
+      ghist: [], peaks: [], gLast: -1
     };
     S.startCycle = 6; S.tgtCycle = S.tgtIn + S.tgtOut; S.brStart = 10;
   }
@@ -762,6 +768,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     var len = S.inhale ? S.tin : S.tout;
     if(S.phaseT >= len){
       S.phaseT -= len;
+      if(S.inhale) S.peaks.push({t: S.t - S.phaseT, h: len});
       if(!S.inhale){ endOfCycle(); }
       S.inhale = !S.inhale;
       tone(S.inhale ? 440 : 330);
@@ -769,6 +776,13 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     len = S.inhale ? S.tin : S.tout;
     var p = clamp(S.phaseT / len, 0, 1), e = 0.5 - 0.5*Math.cos(Math.PI*p);
     S.b = S.inhale ? e : 1 - e;
+    // V19: grafiekwaarde; stijgt 1 eenheid per seconde inademen, daalt over de uitademing.
+    if(S.t - S.gLast >= 0.04){
+      S.gLast = S.t;
+      S.ghist.push({t: S.t, h: graphH(S.inhale, S.phaseT, S.tin, S.tout), inh: S.inhale});
+      while(S.ghist.length && S.ghist[0].t < S.t - 20) S.ghist.shift();
+      while(S.peaks.length && S.peaks[0].t < S.t - 20) S.peaks.shift();
+    }
 
     var cyc = S.tin + S.tout;
     if(source === 'live'){
@@ -828,6 +842,88 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     return colorProgress;
   }
 
+  // ---------- V19: grafiekweergave ----------
+  var graphView = false;
+  function graphH(inh, pt, tin, tout){
+    return inh ? clamp(pt, 0, tin) : tin * (1 - clamp(pt / Math.max(.001, tout), 0, 1));
+  }
+  function rampAt(bt){
+    if(bt < 90){ var p = clamp(bt / 90, 0, 1); return {tin: S.startIn + (4 - S.startIn) * p, tout: S.startOut + (6 - S.startOut) * p}; }
+    if(bt < 180) return {tin: 4, tout: 6 + clamp((bt - 90) / 90, 0, 1)};
+    return {tin: 4, tout: 7};
+  }
+  // Rekent het komende verloop vooruit met dezelfde regels als step().
+  function futurePath(seconds){
+    var inh = S.inhale, pt = S.phaseT, bt = S.breathT, tin = S.tin, tout = S.tout, d = 0.05;
+    var pts = [], peaks = [];
+    for(var t = 0; t <= seconds; t += d){
+      pt += d; bt += d;
+      if(source === 'live'){
+        var oldLen = inh ? tin : tout, pr = oldLen > 0 ? pt / oldLen : 0, r = rampAt(bt);
+        tin = r.tin; tout = r.tout; pt = pr * (inh ? tin : tout);
+      }
+      var len = inh ? tin : tout;
+      if(pt >= len){ pt -= len; if(inh) peaks.push({t: S.t + t, h: len}); inh = !inh; }
+      pts.push({t: S.t + t, h: graphH(inh, pt, tin, tout), inh: inh});
+    }
+    return {pts: pts, peaks: peaks};
+  }
+  function drawGraph(){
+    var r = cv._r || 1, W = cv.width / r, H = cv.height / r;
+    cx.setTransform(r,0,0,r,0,0); cx.clearRect(0,0,W,H);
+    var PAST = 8, FUT = 10, nowX = W * 0.44;
+    var fut = futurePath(FUT);
+    var maxH = S.tin;
+    S.peaks.forEach(function(p){ maxH = Math.max(maxH, p.h); });
+    fut.peaks.forEach(function(p){ maxH = Math.max(maxH, p.h); });
+    var yMax = Math.max(5, Math.ceil(maxH + 0.8));
+    var top = 78, bot = H - 26;
+    var X = function(t){ return nowX + (t - S.t) / (PAST + FUT) * W; };
+    var Y = function(h){ return bot - h / yMax * (bot - top); };
+    cx.font = '11px Inter, sans-serif'; cx.textAlign = 'left';
+    for(var g = 1; g <= yMax; g++){
+      cx.strokeStyle = 'rgba(170,190,215,.10)'; cx.lineWidth = 1;
+      cx.beginPath(); cx.moveTo(30, Y(g)); cx.lineTo(W - 8, Y(g)); cx.stroke();
+      cx.fillStyle = 'rgba(170,190,215,.55)'; cx.fillText(g + ' s', 6, Y(g) + 4);
+    }
+    cx.strokeStyle = 'rgba(170,190,215,.25)'; cx.beginPath(); cx.moveTo(30, bot); cx.lineTo(W - 8, bot); cx.stroke();
+    function path(pts, alpha, width, dash){
+      cx.setLineDash(dash || []); cx.lineWidth = width; cx.lineCap = 'round'; cx.lineJoin = 'round';
+      for(var i = 1; i < pts.length; i++){
+        var a = pts[i-1], b = pts[i];
+        cx.strokeStyle = (b.inh ? 'rgba(217,68,63,' : 'rgba(59,120,212,') + alpha + ')';
+        cx.beginPath(); cx.moveTo(X(a.t), Y(a.h)); cx.lineTo(X(b.t), Y(b.h)); cx.stroke();
+      }
+      cx.setLineDash([]);
+    }
+    var nowH = graphH(S.inhale, S.phaseT, S.tin, S.tout);
+    var past = S.ghist.filter(function(p){ return p.t >= S.t - PAST - 0.5; }).concat([{t: S.t, h: nowH, inh: S.inhale}]);
+    path([{t: S.t, h: nowH, inh: S.inhale}].concat(fut.pts), 0.35, 3, [6, 6]);
+    path(past, 0.95, 4);
+    function peakLabel(p, alpha){
+      var x = X(p.t); if(x < 34 || x > W - 20) return;
+      cx.fillStyle = 'rgba(255,255,255,' + alpha + ')'; cx.font = '600 12px Inter, sans-serif'; cx.textAlign = 'center';
+      cx.fillText(fmt(p.h, 1), x, Y(p.h) - 9);
+    }
+    S.peaks.forEach(function(p){ peakLabel(p, 0.85); });
+    fut.peaks.forEach(function(p){ peakLabel(p, 0.45); });
+    cx.strokeStyle = 'rgba(255,255,255,.18)'; cx.lineWidth = 1;
+    cx.beginPath(); cx.moveTo(nowX, top - 10); cx.lineTo(nowX, bot); cx.stroke();
+    var col = S.inhale ? '217,68,63' : '59,120,212';
+    cx.fillStyle = 'rgba(' + col + ',.25)'; cx.beginPath(); cx.arc(nowX, Y(nowH), 14, 0, Math.PI*2); cx.fill();
+    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(nowX, Y(nowH), 7, 0, Math.PI*2); cx.fill();
+    cx.fillStyle = 'rgb(' + col + ')'; cx.beginPath(); cx.arc(nowX, Y(nowH), 4.5, 0, Math.PI*2); cx.fill();
+    cx.fillStyle = '#fff'; cx.font = '700 22px Inter, sans-serif'; cx.textAlign = 'left';
+    cx.fillText(S.inhale ? 'in' : 'uit', nowX + 18, Y(nowH) + (S.inhale ? -12 : 26));
+    cx.textAlign = 'left';
+  }
+  $('viewToggle').onclick = function(){
+    graphView = !graphView;
+    $('phone').classList.toggle('graph-view', graphView);
+    $('viewToggle').textContent = graphView ? 'Cirkel' : 'Grafiek';
+    draw();
+  };
+
   // V18: rood (inademen) en blauw (uitademen) worden nooit rechtstreeks gemengd;
   // de overgang loopt via een neutrale tint, zodat er geen paars ontstaat.
   var RED = [217,68,63], BLUE = [59,120,212], NEUTRAL = [150,158,172];
@@ -837,6 +933,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
   }
 
   function drawCloud(){
+    if(graphView && running && S.mode === 'adem'){ drawGraph(); return; }
     var r = cv._r || 1, W = cv.width / r, H = cv.height / r;
     cx.setTransform(r,0,0,r,0,0); cx.clearRect(0,0,W,H);
     var b = running ? S.b : (syncing ? 0.2 + 0.08 * Math.sin(performance.now() / 1000 * Math.PI / 2) : 0.15);
