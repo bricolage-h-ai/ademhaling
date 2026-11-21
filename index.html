@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V26 – live met je Forerunner</title>
+<title>Ademhalingsapp V27 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -29,7 +29,7 @@ canvas{display:block;width:100%}
 .breathCue{display:none;position:absolute;left:50%;top:var(--cy,50%);transform:translate(-50%,-50%);z-index:3;color:#fff;font-size:54px;line-height:1;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 2px 18px rgba(0,0,0,.55);pointer-events:none;user-select:none;white-space:nowrap}
 .phone.exercise-mode .breathCue{display:block}
 .breathCue .fraction{font-size:19px;font-weight:600;letter-spacing:-.025em;vertical-align:baseline;margin-left:3px;opacity:.94}.breathCue .unit{font-size:11px;font-weight:600;letter-spacing:0;vertical-align:super;margin-left:2px;opacity:.78}
-.breathPhaseMark{display:none;position:absolute;left:50%;top:calc(var(--cy,50%) - 60px);transform:translateX(40px);transform-origin:left bottom;z-index:3;color:#fff;font-size:22px;line-height:1;font-weight:700;letter-spacing:.02em;opacity:.9;text-shadow:0 1px 8px rgba(0,0,0,.65);pointer-events:none;user-select:none}
+.breathPhaseMark{display:none;position:absolute;left:50%;top:calc(var(--cy,50%) - 60px);transform:translateX(40px);transform-origin:left bottom;z-index:3;color:#fff;font-size:35px;line-height:1;font-weight:700;letter-spacing:.02em;opacity:.9;text-shadow:0 1px 8px rgba(0,0,0,.65);pointer-events:none;user-select:none}
 .phone.exercise-mode .breathPhaseMark{display:block}
 .readout{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .readout .pattern{margin-top:2px}
@@ -329,7 +329,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     </div>
     </div>
     <label class="toggle"><input type="checkbox" id="sound" checked> Zachte toon bij wisselen</label>
-    <div class="ver" id="ver">V26</div>
+    <div class="ver" id="ver">V27</div>
 
     <div class="summary" id="summary" role="dialog" aria-label="Samenvatting">
       <h2>Sessie klaar</h2>
@@ -381,7 +381,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken verbinden → oefening kiezen → ademen. V19: grafiekweergave met wisselknop. V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -427,7 +427,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('speed').disabled = s === 'live'; if(s === 'live') $('speed').value = '1';
     $('startBtn').disabled = s === 'live' && !live.synced;
     $('startBtn').textContent = 'Start oefening';
-    // V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
+    // V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag (kloppend hart, getal, Garmin live) over cirkel en grafiek. V24: in/uit groeit en krimpt mee met de adem. V23: geen onderteksten tijdens de oefening, alleen fase + balken. V22: hogere grafiek, rustiger lijnen, compact paneel, trilling, versielabel. V21: ring start op 9 uur, ronde grafiekcurve, geen seconden-as. V20: stappenblokken
     $('blk1').hidden = s !== 'live';
     $('measureField').hidden = s !== 'live';
     $('speedField').hidden = s === 'live';
@@ -715,6 +715,8 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
       : 'Eerst 30 s meten met de knop hierboven, daarna start je op <b>je eigen ritme</b>.';
     else sum = 'Start op <b>3,5 in · 4,0 uit</b> → 4-6 na 1:30 → 4-7 na 3:00.';
     $('flowSum').innerHTML = sum;
+    // V27: bij Overslaan start je direct vanuit blok 2.
+    $('flowNext').textContent = (source === 'live' && flowMeasure === 'skip') ? 'Start oefening' : 'Verder';
   }
   function flowGo(n){
     if(running) return;
@@ -738,7 +740,10 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
   }
   $('mSync').onclick = function(){ setMeasure('sync'); };
   $('mSkip').onclick = function(){ setMeasure('skip'); };
-  $('flowNext').onclick = function(){ flowGo(3); };
+  $('flowNext').onclick = function(){
+    flowGo(3);
+    if(source === 'live' && flowMeasure === 'skip' && !$('startBtn').disabled) $('startBtn').click();
+  };
   [1,2].forEach(function(i){ $('fedit' + i).onclick = function(){ flowGo(i); }; });
   $('dur').addEventListener('change', flowText);
 
@@ -1194,7 +1199,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     line(function(s){return s.hr;}, Yh, '#3b78d4');
   }
 
-  // V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag over de visualisatie; het hart klopt op de echte hartslag (lub-dub).
+  // V27: direct starten bij Overslaan, grotere in/uit. V26: randloos schermvullend beeld, strakke hartslaglaag, monitorlijn 10 s. V25: hartslaglaag over de visualisatie; het hart klopt op de echte hartslag (lub-dub).
   var hrBeat = {phase: 0, last: 0};
   function updateHrOverlay(){
     var now = performance.now(), dt = hrBeat.last ? Math.min(0.1, (now - hrBeat.last) / 1000) : 0;
@@ -1291,7 +1296,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('breathCueFraction').textContent = '.' + String(hundredths).padStart(2, '0');
     $('breathPhaseMark').textContent = S.inhale ? 'in' : 'uit';
     // V24: het woord ademt mee met de longen (zelfde waarde S.b): klein -> groot bij in, groot -> klein bij uit.
-    $('breathPhaseMark').style.transform = 'translateX(40px) scale(' + (0.6 + 1.0 * clamp(S.b, 0, 1)).toFixed(3) + ')';
+    $('breathPhaseMark').style.transform = 'translateX(40px) scale(' + (0.7 + 0.9 * clamp(S.b, 0, 1)).toFixed(3) + ')';
     $('count').textContent = fmt(Math.max(0, len - S.phaseT), 1);
     $('pattern').textContent = 'in ' + fmt(S.tin,1) + ' s · uit ' + fmt(S.tout,1) + ' s → doel ' + S.tgtIn + '-' + S.tgtOut;
     $('prog').style.width = (visualProgress * 100) + '%';
