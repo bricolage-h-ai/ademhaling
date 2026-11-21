@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ademhalingsapp V17 – live met je Forerunner</title>
+<title>Ademhalingsapp V18 – live met je Forerunner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -29,7 +29,7 @@ canvas{display:block;width:100%}
 .breathCue{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;color:#fff;font-size:54px;line-height:1;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 2px 18px rgba(0,0,0,.55);pointer-events:none;user-select:none;white-space:nowrap}
 .phone.exercise-mode .breathCue{display:block}
 .breathCue .fraction{font-size:19px;font-weight:600;letter-spacing:-.025em;vertical-align:baseline;margin-left:3px;opacity:.94}.breathCue .unit{font-size:11px;font-weight:600;letter-spacing:0;vertical-align:super;margin-left:2px;opacity:.78}
-.breathPhaseMark{display:none;position:absolute;left:50%;top:calc(50% - 43px);transform:translateX(39px);z-index:3;color:#fff;font-size:11px;line-height:1;font-weight:600;letter-spacing:.02em;opacity:.82;text-shadow:0 1px 8px rgba(0,0,0,.65);pointer-events:none;user-select:none}
+.breathPhaseMark{display:none;position:absolute;left:50%;top:calc(50% - 60px);transform:translateX(40px);z-index:3;color:#fff;font-size:22px;line-height:1;font-weight:700;letter-spacing:.02em;opacity:.9;text-shadow:0 1px 8px rgba(0,0,0,.65);pointer-events:none;user-select:none}
 .phone.exercise-mode .breathPhaseMark{display:block}
 .readout{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .readout .pattern{margin-top:2px}
@@ -50,8 +50,8 @@ canvas{display:block;width:100%}
 .btn{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#16191e;color:var(--ink);font:600 14px Inter,sans-serif;cursor:pointer}
 .btn.primary{background:var(--blue);border-color:var(--blue)}
     #breathTap{touch-action:none;user-select:none;-webkit-user-select:none;transition:background .16s,border-color .16s,transform .12s,box-shadow .16s}
-    #breathTap.inhale-active{background:#245fae;border-color:#69adff;box-shadow:0 0 0 3px rgba(105,173,255,.18);transform:scale(.985)}
-    #breathTap.exhale-active{background:#8f3438;border-color:#ed777b;box-shadow:0 0 0 3px rgba(237,119,123,.15)}
+    #breathTap.inhale-active{background:#8f3438;border-color:#ed777b;box-shadow:0 0 0 3px rgba(237,119,123,.15);transform:scale(.985)}
+    #breathTap.exhale-active{background:#245fae;border-color:#69adff;box-shadow:0 0 0 3px rgba(105,173,255,.18)}
 .btn:disabled{opacity:.4;cursor:default}
 .slider{display:flex;flex-direction:column;gap:6px}
 .slider input{width:100%;accent-color:var(--blue)}
@@ -180,7 +180,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     <div class="stage">
       <canvas id="cloud" height="280" aria-hidden="true"></canvas>
       <svg class="breathRing" id="breathRing" viewBox="0 0 338 340" aria-hidden="true">
-        <defs><linearGradient id="breathGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop id="ringBlueStop" offset="0%" stop-color="#3b78d4"/><stop id="ringGreenStop" offset="100%" stop-color="#2fa36b"/></linearGradient></defs>
+        <defs><linearGradient id="breathGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop id="ringBlueStop" offset="0%" stop-color="#d9443f"/><stop id="ringGreenStop" offset="100%" stop-color="#3b78d4"/></linearGradient></defs>
         <circle class="breathRingTrack" cx="169" cy="170" r="153"></circle>
         <circle class="breathRingProgress" id="breathRingProgress" cx="169" cy="170" r="153" pathLength="1000"></circle>
       </svg>
@@ -279,7 +279,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
 </div>
 
 <script>
-// V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
+// V18: rood (in) / blauw (uit) zonder paars, rustige start bij overslaan (3,5 · 4,0). V17: fix Overslaan + startknop (ontbrekende knop, ontbrekende kleurvariabele). V16: grotere ademvisualisatie, honderdsten-timer, continu blauw-groen kleurverloop en optionele synchronisatie.
 (function(){
   var PROGS = { rust:{tin:4, tout:6, name:'Rustiger'}, coh:{tin:5, tout:5, name:'Coherentie'} };
   var $ = function(id){ return document.getElementById(id); };
@@ -568,7 +568,7 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     $('startBtn').textContent = 'Start oefening';
     $('phase').textContent = 'Klaar';
     $('count').textContent = Math.round(live.syncHr);
-    $('pattern').textContent = 'Meting overgeslagen · algemeen starttempo';
+    $('pattern').textContent = 'Meting overgeslagen · start op 3,5 in · 4,0 uit';
     $('status').textContent = 'Direct starten · gemiddelde startschatting';
     $('status').className = 'chip ok';
     setConn('ok', 'Hartslag verbonden · synchronisatie overgeslagen');
@@ -623,6 +623,8 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     var hasMeasuredPhases = nIn > 0 && nOut > 0;
     S.tin = S.startIn = hasMeasuredPhases ? clamp(measuredIn / nIn, 1.5, 8) : Math.min(half, 4);
     S.tout = S.startOut = hasMeasuredPhases ? clamp(measuredOut / nOut, 1.5, 10) : Math.min(half, 6);
+    // V18: bij overslaan een vaste, rustige start (3,5 in · 4,0 uit) in plaats van de hartslagschatting.
+    if(source === 'live' && live.syncSkipped && !hasMeasuredPhases){ S.tin = S.startIn = 3.5; S.tout = S.startOut = 4.0; }
     // Live-opbouw: eerst 4–6, daarna 4–7. De drie minuten
     // beginnen pas zodra de meting is afgerond.
     if(source === 'live'){ S.tgtIn = 4; S.tgtOut = 7; }
@@ -814,14 +816,24 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
   // hun relatieve intensiteit; de overgang loopt over de volledige fase.
   // V17: gedeelde functie, zodat longvorm én ring dezelfde waarde gebruiken.
   function colorPhase(){
-    var colorProgress = 0.5;
+    var colorProgress = 0;
     if(running && S.mode === 'adem'){
       var phaseLen = S.inhale ? S.tin : S.tout;
       var phaseProgress = clamp(S.phaseT / Math.max(.001, phaseLen), 0, 1);
-      colorProgress = S.inhale ? phaseProgress : 1 - phaseProgress;
-      colorProgress = colorProgress * colorProgress * (3 - 2 * colorProgress);
+      // V18: de wissel gebeurt in de eerste 35% van de fase; daarna is de fasekleur zuiver.
+      var k = clamp(phaseProgress / 0.35, 0, 1);
+      k = k * k * (3 - 2 * k);
+      colorProgress = S.inhale ? k : 1 - k;
     }
     return colorProgress;
+  }
+
+  // V18: rood (inademen) en blauw (uitademen) worden nooit rechtstreeks gemengd;
+  // de overgang loopt via een neutrale tint, zodat er geen paars ontstaat.
+  var RED = [217,68,63], BLUE = [59,120,212], NEUTRAL = [150,158,172];
+  function breathRGB(cp){
+    var a = cp >= 0.5 ? RED : BLUE, t = cp >= 0.5 ? (cp - 0.5) * 2 : (0.5 - cp) * 2;
+    return NEUTRAL.map(function(v, i){ return Math.round(v + (a[i] - v) * t); });
   }
 
   function drawCloud(){
@@ -833,20 +845,16 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     var blueAlpha = 0.34 + 0.58 * colorProgress;
     var greenAlpha = 0.34 + 0.58 * (1 - colorProgress);
     var blueGlow = cx.createRadialGradient(mx - 35, my, 4, mx - 35, my, 150 * scale);
-    blueGlow.addColorStop(0, 'rgba(59,120,212,' + (0.30 * blueAlpha) + ')');
-    blueGlow.addColorStop(.58, 'rgba(59,120,212,' + (0.12 * blueAlpha) + ')');
-    blueGlow.addColorStop(1, 'rgba(59,120,212,0)');
+    blueGlow.addColorStop(0, 'rgba(217,68,63,' + (0.30 * blueAlpha) + ')');
+    blueGlow.addColorStop(.58, 'rgba(217,68,63,' + (0.12 * blueAlpha) + ')');
+    blueGlow.addColorStop(1, 'rgba(217,68,63,0)');
     cx.fillStyle = blueGlow; cx.beginPath(); cx.arc(mx - 35, my, 150 * scale, 0, Math.PI*2); cx.fill();
     var greenGlow = cx.createRadialGradient(mx + 35, my, 4, mx + 35, my, 150 * scale);
-    greenGlow.addColorStop(0, 'rgba(47,163,107,' + (0.30 * greenAlpha) + ')');
-    greenGlow.addColorStop(.58, 'rgba(47,163,107,' + (0.12 * greenAlpha) + ')');
-    greenGlow.addColorStop(1, 'rgba(47,163,107,0)');
+    greenGlow.addColorStop(0, 'rgba(59,120,212,' + (0.30 * greenAlpha) + ')');
+    greenGlow.addColorStop(.58, 'rgba(59,120,212,' + (0.12 * greenAlpha) + ')');
+    greenGlow.addColorStop(1, 'rgba(59,120,212,0)');
     cx.fillStyle = greenGlow; cx.beginPath(); cx.arc(mx + 35, my, 150 * scale, 0, Math.PI*2); cx.fill();
-    var rgb = [
-      Math.round(47 + (59-47) * colorProgress),
-      Math.round(163 + (120-163) * colorProgress),
-      Math.round(107 + (212-107) * colorProgress)
-    ];
+    var rgb = breathRGB(colorProgress);
     var color = 'rgba(' + rgb.join(',') + ',';
 
     // Een zachtere, licht asymmetrische longvorm: organisch in plaats van anatomisch.
@@ -945,13 +953,12 @@ ol{margin:0;padding-left:18px;color:var(--quiet);font-size:14px;line-height:1.6}
     // The ring remains perfectly round; inhale fills it, exhale releases it.
     var visualProgress = clamp(S.b, 0, 1);
     // V13: vaste fasekleuren; blauw voor inademen, groen voor uitademen.
-    var breathColor = S.inhale ? '#69a9f5' : '#55bd8a';
+    var breathColor = S.inhale ? '#e5625d' : '#69a9f5';
     var colorProgress = colorPhase();
     var ring = $('breathRingProgress');
     ring.style.strokeDasharray = '1000';
     ring.style.strokeDashoffset = (1000 * (1 - visualProgress)).toFixed(1);
-    $('ringBlueStop').style.stopOpacity = String(0.34 + 0.66 * colorProgress);
-    $('ringGreenStop').style.stopOpacity = String(0.34 + 0.66 * (1 - colorProgress));
+    ring.style.stroke = 'rgb(' + breathRGB(colorProgress).join(',') + ')';
     $('breathRing').style.opacity = '1';
     $('phase').textContent = S.inhale ? 'Adem in' : 'Adem uit';
     var remaining = Math.max(0, len - S.phaseT);
